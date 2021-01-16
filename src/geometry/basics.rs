@@ -93,7 +93,10 @@ impl SubAssign for Vector3D {
 
 impl PartialEq for Vector3D {
     fn eq(&self, other: &Self) -> bool {
-        (self.x - other.x).abs() <= f64::EPSILON
+        [self.x, self.y, self.z, other.x, other.y, other.z]
+            .iter()
+            .all(|x| x.is_finite())
+            && (self.x - other.x).abs() <= f64::EPSILON
             && (self.y - other.y).abs() <= f64::EPSILON
             && (self.z - other.z).abs() <= f64::EPSILON
     }
@@ -133,6 +136,30 @@ impl Vector3D {
     /// Reduce length to 1.
     pub fn normalized(&self) -> Self {
         *self / self.length()
+    }
+
+    pub fn px() -> Self {
+        Self::new(1.0, 0.0, 0.0)
+    }
+
+    pub fn py() -> Self {
+        Self::new(0.0, 1.0, 0.0)
+    }
+
+    pub fn pz() -> Self {
+        Self::new(0.0, 0.0, 1.0)
+    }
+
+    pub fn mx() -> Self {
+        Self::new(-1.0, 0.0, 0.0)
+    }
+
+    pub fn my() -> Self {
+        Self::new(0.0, -1.0, 0.0)
+    }
+
+    pub fn mz() -> Self {
+        Self::new(0.0, 0.0, -1.0)
     }
 }
 
@@ -189,11 +216,18 @@ impl Point3D {
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Self { x, y, z }
     }
+
+    pub fn origin() -> Self {
+        Self::new(0.0, 0.0, 0.0)
+    }
 }
 
 impl PartialEq for Point3D {
     fn eq(&self, other: &Self) -> bool {
-        (self.x - other.x).abs() <= f64::EPSILON
+        [self.x, self.y, self.z, other.x, other.y, other.z]
+            .iter()
+            .all(|x| x.is_finite())
+            && (self.x - other.x).abs() <= f64::EPSILON
             && (self.y - other.y).abs() <= f64::EPSILON
             && (self.z - other.z).abs() <= f64::EPSILON
     }

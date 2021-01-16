@@ -1,45 +1,102 @@
-use crate::{geometry::shape::Shape, light::Ray};
+use {
+    crate::{
+        geometry::{shape::Shape, Point3D, Vector3D, VOP},
+        ray::{BounceResult, Ray},
+    },
+    std::error::Error,
+};
 
+#[derive(Debug, Clone, Copy)]
 pub enum SOP {
     Reflect,
     Refract,
+    Light(u8, u8, u8),
+    Dark,
 }
 
 impl SOP {
     /// Deals with an incoming ray on a surface depending on the SOP type.
     /// Will update the ray information in-place.
-    pub fn bounce(&self, ray: &mut Ray, shape: &impl Shape) {
+    pub fn bounce(&self, ray: &mut Ray, shape: &impl Shape) -> BounceResult {
         match self {
-            Self::Reflect => Self::reflect(ray, shape),
-            Self::Refract => Self::refract(ray, shape),
+            Self::Reflect => reflect(ray, shape),
+            Self::Refract => refract(ray, shape),
+            Self::Light(r, g, b) => BounceResult::Count(*r, *g, *b),
+            Self::Dark => BounceResult::Kill,
         }
     }
+}
 
-    /// Reflect a ray in a surface.
-    fn reflect(ray: &mut Ray, shape: &impl Shape) {
-        ray.origin = shape.first_intersection(ray).unwrap();
-        let normal = shape.normal_at(&ray.origin).unwrap();
-        ray.direction += 2.0 * ray.direction.dot(&normal).abs() / normal.length_squared() * normal;
+/// Analyze a ray incoming on a surface and determine the normal on the side of the incoming ray.
+/// If no errors are found, return intersection point, that normal and the above & below VOPs.
+/// Otherwise return an error.
+fn check_normal<'a>(
+    ray: &Ray,
+    shape: &'a impl Shape,
+) -> Result<(Point3D, Vector3D, &'a VOP, &'a VOP), Box<dyn Error>> {
+    let (intersection, _) = shape
+        .intersection(ray)
+        .ok_or("No intersection between ray and shape.")?;
+
+    let normal = shape
+        .normal_at(&intersection)
+        .ok_or("Shape has no normal at point.")?;
+
+    // ray is inbound from medium into which normal points
+    if normal.dot(&ray.direction) <= 1.0 {
+        // check that ray VOP and above VOP match
+        if ray.vop != *shape.vop_above() {
+            panic!("VOP mismatch!")
+        }
+        return Ok((intersection, normal, shape.vop_above(), shape.vop_below()));
+    // ray is inbound from other side of boundary
+    } else {
+        if ray.vop != *shape.vop_below() {
+            panic!("VOP mismatch")
+        }
+        return Ok((
+            intersection,
+            -1.0 * normal,
+            shape.vop_below(),
+            shape.vop_above(),
+        ));
     }
+}
 
-    /// Refract a ray in a surface.
-    fn refract(ray: &mut Ray, shape: &impl Shape) {
+/// Reflect a ray in a surface.
+fn reflect(ray: &mut Ray, shape: &impl Shape) -> BounceResult {
+    if let Ok((intersection, normal, _, _)) = check_normal(ray, shape) {
+        ray.origin = intersection;
+        ray.direction += 2.0 * ray.direction.dot(&normal).abs() / normal.length_squared() * normal;
+        BounceResult::Continue
+    } else {
+        BounceResult::Error
+    }
+}
+
+/// Refract a ray in a surface.
+fn refract(ray: &mut Ray, shape: &impl Shape) -> BounceResult {
+    if let Ok((intersection, mut normal, vop_above, vop_below)) = check_normal(ray, shape) {
         // update ray origin to point of intersection
-        ray.origin = shape.first_intersection(ray).unwrap();
+        ray.origin = intersection;
 
         // ratio of n_above / n_below
-        let nanb = shape.vop_above().index_of_refraction / shape.vop_below().index_of_refraction;
+        let nanb = vop_above.index_of_refraction / vop_below.index_of_refraction;
 
         // normal to surface at new contact point
-        let n = shape.normal_at(&ray.origin).unwrap().normalized();
+        normal = normal.normalized();
         ray.direction = ray.direction.normalized();
 
         // update ray direction
         ray.direction = nanb * ray.direction
-            + (nanb * ray.direction.dot(&n)
-                - (1.0 - nanb.powi(2) * (1.0 - ray.direction.dot(&n).powi(2))).sqrt())
-                * n;
+            + (nanb * ray.direction.dot(&normal)
+                - (1.0 - nanb.powi(2) * (1.0 - ray.direction.dot(&normal).powi(2))).sqrt())
+                * normal;
 
-        // TODO: changing ray VOP
+        // update ray VOP
+        ray.vop = *vop_below;
+        BounceResult::Continue
+    } else {
+        BounceResult::Error
     }
 }

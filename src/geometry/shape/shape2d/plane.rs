@@ -1,6 +1,7 @@
 use crate::{
     geometry::{shape::Shape, Point3D, Vector3D, SOP, VOP},
-    light::Ray,
+    ray::{BounceResult, Ray},
+    SURFACE_INCLUSION,
 };
 
 pub struct Plane {
@@ -11,24 +12,64 @@ pub struct Plane {
     below: VOP,
 }
 
-impl Shape for Plane {
-    fn intersections(&self, ray: &Ray) -> Vec<Point3D> {
-        if !self.intersects(ray) {
-            Vec::new()
-        } else {
-            vec![
-                ray.origin
-                    + ray.direction * self.normal.dot(&(self.origin - ray.origin))
-                        / self.normal.dot(&ray.direction),
-            ]
+impl Plane {
+    pub fn new(origin: Point3D, normal: Vector3D, surface: SOP, above: VOP, below: VOP) -> Self {
+        Self {
+            origin,
+            normal,
+            surface,
+            above,
+            below,
         }
     }
+
+    /// Returns the intersection of a line and the plane.
+    pub(crate) fn line_intersection(
+        &self,
+        origin: &Point3D,
+        direction: &Vector3D,
+    ) -> Option<Point3D> {
+        // if line is parallel to plane
+        if direction.dot(&self.normal).abs() <= f64::EPSILON {
+            None
+        } else {
+            Some(
+                *origin
+                    + *direction * self.normal.dot(&(self.origin - *origin))
+                        / self.normal.dot(direction),
+            )
+        }
+    }
+}
+
+impl Shape for Plane {
+    fn intersection(&self, ray: &Ray) -> Option<(Point3D, f64)> {
+        // if the line of the ray intersects the plane
+        if let Some(intersection) = self.line_intersection(&ray.origin, &ray.direction) {
+            let origin_to_intersection = intersection - ray.origin;
+            // ray origin is not on plane
+            if !self.contains(&ray.origin) &&
+            // ray is going towards plane
+            origin_to_intersection.dot(&ray.direction) >= 0.0
+            {
+                return Some((intersection, origin_to_intersection.length_squared()));
+            }
+        }
+        None
+    }
+
+    /// More optimized version of intersects, that will discard ray automatically if line
+    /// intersection fails.
     fn intersects(&self, ray: &Ray) -> bool {
-        ray.direction.dot(&self.normal).abs() >= f64::EPSILON
+        self.line_intersection(&ray.origin, &ray.direction)
+            .is_some()
+            && self.intersection(&ray).is_some()
     }
+
     fn contains(&self, point: &Point3D) -> bool {
-        self.normal.dot(&(self.origin - *point)).abs() >= f64::EPSILON
+        self.normal.dot(&(self.origin - *point)).abs() <= SURFACE_INCLUSION
     }
+
     fn normal_at(&self, point: &Point3D) -> Option<Vector3D> {
         if self.contains(point) {
             Some(self.normal)
@@ -36,12 +77,15 @@ impl Shape for Plane {
             None
         }
     }
-    fn bounce(&self, ray: &mut Ray) {
-        self.surface.bounce(ray, self);
+
+    fn bounce(&self, ray: &mut Ray) -> BounceResult {
+        self.surface.bounce(ray, self)
     }
+
     fn vop_above(&self) -> &VOP {
         &self.above
     }
+
     fn vop_below(&self) -> &VOP {
         &self.below
     }
@@ -70,7 +114,10 @@ mod tests {
             VOP::new(1.0),
         );
         assert!(plane.intersects(&ray));
-        assert_eq!(plane.intersections(&ray), vec![Point3D::new(0.0, 1.0, 0.0)]);
+        assert_eq!(
+            plane.intersection(&ray),
+            Some((Point3D::new(0.0, 1.0, 0.0), 2.0))
+        );
     }
     #[test]
     fn test_no_intersection() {
@@ -81,6 +128,6 @@ mod tests {
             VOP::new(1.0),
         );
         assert!(!plane.intersects(&ray));
-        assert_eq!(plane.intersections(&ray), Vec::new());
+        assert_eq!(plane.intersection(&ray), None);
     }
 }

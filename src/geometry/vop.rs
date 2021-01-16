@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub struct VOP {
     pub index_of_refraction: f64,
 }
