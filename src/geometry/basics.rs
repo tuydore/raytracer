@@ -84,9 +84,9 @@ impl AddAssign for Vector3D {
 impl SubAssign for Vector3D {
     fn sub_assign(&mut self, other: Self) {
         *self = Self {
-            x: self.x + other.x,
-            y: self.y + other.y,
-            z: self.z + other.z,
+            x: self.x - other.x,
+            y: self.y - other.y,
+            z: self.z - other.z,
         };
     }
 }
@@ -164,9 +164,9 @@ impl Sub<Point3D> for Vector3D {
     type Output = Point3D;
     fn sub(self, rhs: Point3D) -> Self::Output {
         Self::Output {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-            z: self.z + rhs.z,
+            x: rhs.x - self.x,
+            y: rhs.y - self.y,
+            z: rhs.z - self.z,
         }
     }
 }
@@ -175,9 +175,9 @@ impl Sub<Vector3D> for Point3D {
     type Output = Point3D;
     fn sub(self, rhs: Vector3D) -> Self::Output {
         Self::Output {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-            z: self.z + rhs.z,
+            x: self.x - rhs.x,
+            y: self.y - rhs.y,
+            z: self.z - rhs.z,
         }
     }
 }
@@ -206,6 +206,142 @@ impl Sub<Point3D> for Point3D {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
             z: self.z - rhs.z,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn vx() -> Vector3D {
+        Vector3D::new(1.0, 0.0, 0.0)
+    }
+
+    fn vy() -> Vector3D {
+        Vector3D::new(0.0, 1.0, 0.0)
+    }
+
+    fn vz() -> Vector3D {
+        Vector3D::new(0.0, 0.0, 1.0)
+    }
+
+    fn vo() -> Vector3D {
+        Vector3D::new(0.0, 0.0, 0.0)
+    }
+
+    fn px() -> Point3D {
+        Point3D::new(1.0, 0.0, 0.0)
+    }
+
+    fn py() -> Point3D {
+        Point3D::new(0.0, 1.0, 0.0)
+    }
+
+    fn pz() -> Point3D {
+        Point3D::new(0.0, 0.0, 1.0)
+    }
+
+    fn po() -> Point3D {
+        Point3D::new(0.0, 0.0, 0.0)
+    }
+
+    #[cfg(test)]
+    mod vector_tests {
+        use super::*;
+
+        #[test]
+        fn vector_addition() {
+            assert_eq!(vx() + vy(), Vector3D::new(1.0, 1.0, 0.0));
+            assert_eq!(vx() + vo(), vx());
+        }
+
+        #[test]
+        fn vector_assign_addition() {
+            let mut v = vx();
+            v += vy();
+            assert_eq!(v, vx() + vy());
+        }
+
+        #[test]
+        fn vector_subtraction() {
+            assert_eq!(vx() - vy(), Vector3D::new(1.0, -1.0, 0.0));
+            assert_eq!(vx() - vo(), vx());
+            assert_eq!(vo() - vx(), -1.0 * vx());
+        }
+
+        #[test]
+        fn vector_assign_subtraction() {
+            let mut v = vx();
+            v -= vy();
+            assert_eq!(v, vx() - vy());
+        }
+
+        #[test]
+        fn vector_dot() {
+            assert!(vx().dot(&vy()) - 0.0 <= f64::EPSILON);
+            assert!(vx().dot(&vo()) - 0.0 <= f64::EPSILON);
+            assert!(vo().dot(&vx()) - 0.0 <= f64::EPSILON);
+            assert!(vx().dot(&vx()) - 1.0 <= f64::EPSILON);
+        }
+
+        #[test]
+        fn vector_cross() {
+            assert_eq!(vx().cross(&vx()), vo());
+            assert_eq!(vx().cross(&vy()), vz());
+            assert_eq!(vx().cross(&vo()), vo());
+        }
+
+        #[test]
+        fn vector_size() {
+            assert!(vx().length_squared() - 1.0 <= f64::EPSILON);
+            assert!(vx().length() - 1.0 <= f64::EPSILON);
+            assert!((2.0 * vx()).length() - 2.0 <= f64::EPSILON);
+            assert!(vo().length() <= f64::EPSILON);
+            assert_eq!((2.0 * vz()).normalized(), vz());
+        }
+
+        #[test]
+        fn vector_equality() {
+            assert_eq!(vx(), vx());
+        }
+    }
+
+    #[cfg(test)]
+    mod point_tests {
+        use super::*;
+
+        #[test]
+        fn point_subtraction() {
+            assert_eq!(px() - po(), vx());
+            assert_eq!(po() - px(), -1.0 * vx());
+            assert_eq!(py() - py(), vo());
+        }
+
+        #[test]
+        fn point_equality() {
+            assert_eq!(px(), px());
+        }
+    }
+
+    #[cfg(test)]
+    mod point_vector_integration_tests {
+        use super::*;
+
+        #[test]
+        fn point_vector_addition() {
+            assert_eq!(po() + vz(), pz());
+            assert_eq!(vz() + po(), pz());
+            assert_eq!(po() + vo(), po());
+            assert_eq!(px() + vo(), px());
+        }
+
+        #[test]
+        fn point_vector_subtraction() {
+            assert_eq!(po() - vz(), Point3D::new(0.0, 0.0, -1.0));
+            assert_eq!(vz() - po(), Point3D::new(0.0, 0.0, -1.0));
+            assert_eq!(po() - vo(), po());
+            assert_eq!(px() - vo(), px());
         }
     }
 }

@@ -1,9 +1,4 @@
-use crate::{
-    geometry::{shape::Shape, vop::VOP, Point3D, Vector3D},
-    light::Ray,
-};
-
-use super::shape;
+use crate::{geometry::shape::Shape, light::Ray};
 
 pub enum SOP {
     Reflect,
@@ -44,5 +39,7 @@ impl SOP {
             + (nanb * ray.direction.dot(&n)
                 - (1.0 - nanb.powi(2) * (1.0 - ray.direction.dot(&n).powi(2))).sqrt())
                 * n;
+
+        // TODO: changing ray VOP
     }
 }
