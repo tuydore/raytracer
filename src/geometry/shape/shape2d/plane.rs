@@ -5,11 +5,11 @@ use crate::{
 };
 
 pub struct Plane {
-    origin: Point3D,
-    normal: Vector3D,
-    surface: SOP,
-    above: VOP,
-    below: VOP,
+    pub(crate) origin: Point3D,
+    pub(crate) normal: Vector3D,
+    pub(crate) surface: SOP,
+    pub(crate) above: VOP,
+    pub(crate) below: VOP,
 }
 
 impl Plane {

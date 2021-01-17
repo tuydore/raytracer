@@ -8,13 +8,9 @@ use crate::{
 };
 
 pub struct Rectangle {
-    origin: Point3D,
-    normal: Vector3D,
+    plane: Plane,
     orientation: Vector3D,
     size: (f64, f64), // orientation is along 1st size dimension
-    surface: SOP,
-    above: VOP,
-    below: VOP,
 }
 
 impl Rectangle {
@@ -28,27 +24,15 @@ impl Rectangle {
         below: VOP,
     ) -> Self {
         Self {
-            origin,
-            normal,
+            plane: Plane::new(origin, normal, surface, above, below),
             orientation,
             size,
-            surface,
-            above,
-            below,
         }
     }
 
     /// Returns the intersection of a line and the plane.
     fn line_intersection(&self, origin: &Point3D, direction: &Vector3D) -> Option<Point3D> {
-        let plane = Plane::new(
-            self.origin,
-            self.normal,
-            self.surface,
-            self.above,
-            self.below,
-        );
-        // TODO: optimize this
-        if let Some(p) = plane.line_intersection(origin, direction) {
+        if let Some(p) = self.plane.line_intersection(origin, direction) {
             if self.contains(&p) {
                 Some(p)
             } else {
@@ -86,35 +70,37 @@ impl Shape for Rectangle {
 
     fn contains(&self, point: &Point3D) -> bool {
         // check if point is on plane
-        if self.normal.dot(&(self.origin - *point)).abs() >= SURFACE_INCLUSION {
+        if !self.plane.contains(point) {
             return false;
         }
 
         // check if point is in rectangle
-        let from_origin = *point - self.origin;
+        let from_origin = *point - self.plane.origin;
         let l0 = from_origin.dot(&self.orientation).abs();
-        let l1 = from_origin.dot(&self.normal.cross(&self.orientation)).abs();
+        let l1 = from_origin
+            .dot(&self.plane.normal.cross(&self.orientation))
+            .abs();
         l0 <= self.size.0 / 2.0 && l1 <= self.size.1 / 2.0
     }
 
     fn normal_at(&self, point: &Point3D) -> Option<Vector3D> {
         if self.contains(point) {
-            Some(self.normal)
+            Some(self.plane.normal)
         } else {
             None
         }
     }
 
     fn bounce(&self, ray: &mut Ray) -> BounceResult {
-        self.surface.bounce(ray, self)
+        self.plane.surface.bounce(ray, self)
     }
 
     fn vop_above(&self) -> &VOP {
-        &self.above
+        &self.plane.above
     }
 
     fn vop_below(&self) -> &VOP {
-        &self.below
+        &self.plane.below
     }
 }
 
@@ -123,15 +109,15 @@ mod tests {
     use super::*;
 
     fn xy_square() -> Rectangle {
-        Rectangle {
-            origin: Point3D::new(0.0, 0.0, 0.0),
-            normal: Vector3D::new(0.0, 0.0, 1.0),
-            orientation: Vector3D::new(0.0, 1.0, 0.0),
-            size: (2.0, 2.0),
-            surface: SOP::Reflect,
-            above: VOP::new(1.0),
-            below: VOP::new(1.5),
-        }
+        Rectangle::new(
+            Point3D::new(0.0, 0.0, 0.0),
+            Vector3D::new(0.0, 0.0, 1.0),
+            Vector3D::new(0.0, 1.0, 0.0),
+            (2.0, 2.0),
+            SOP::Reflect,
+            VOP::new(1.0),
+            VOP::new(1.5),
+        )
     }
 
     #[test]
