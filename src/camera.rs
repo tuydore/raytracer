@@ -34,8 +34,8 @@ impl Camera {
     /// With the density parameter, we will approximate the number of bins in each dimension.
     pub fn screen_resolution(&self) -> (usize, usize) {
         (
-            (self.fov.0 / self.density).round() as usize,
-            (self.fov.1 / self.density).round() as usize,
+            (self.fov.0 * self.density).round() as usize,
+            (self.fov.1 * self.density).round() as usize,
         )
     }
 

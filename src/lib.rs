@@ -13,5 +13,5 @@ pub use {
     ray::{BounceResult, Ray},
 };
 
-pub const SURFACE_INCLUSION: f64 = 1e-7;
-pub const DOT_PRODUCT_IDENTITY: f64 = 1e-5;
+pub const SURFACE_INCLUSION: f64 = 1e-5;
+pub const VECTOR_IDENTITY: f64 = 1e-5;

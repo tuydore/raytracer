@@ -40,8 +40,8 @@ fn main() {
         air,
     );
 
-    let sphere_center = Point3D::new(0.0, 12.5, 1.0);
-    let sphere = Sphere::new(sphere_center, 1.0, SOP::Reflect, air, VOP::new(1.0));
+    let sphere_center = Point3D::new(0.0, 12.0, 1.0);
+    let sphere = Sphere::new(sphere_center, 1.0, SOP::Refract, air, VOP::new(1.5));
 
     let r_right = Rectangle::new(
         Point3D::new(2.0, 12.0, 2.0),
@@ -68,7 +68,7 @@ fn main() {
         Vector3D::my(),
         Vector3D::pz(),
         (4.0, 4.0),
-        SOP::Reflect,
+        SOP::Reflect, //Light(255, 255, 255),
         air,
         air,
     );
@@ -89,7 +89,7 @@ fn main() {
         g,
         Vector3D::new(1.0, 0.0, 0.0).cross(&g),
         (20.0, 30.0),
-        0.01,
+        100.0,
         air,
     );
 

@@ -1,5 +1,7 @@
 use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
 
+use crate::{SURFACE_INCLUSION, VECTOR_IDENTITY};
+
 #[derive(Debug, Clone, Copy)]
 pub struct Vector3D {
     pub x: f64,
@@ -96,9 +98,9 @@ impl PartialEq for Vector3D {
         [self.x, self.y, self.z, other.x, other.y, other.z]
             .iter()
             .all(|x| x.is_finite())
-            && (self.x - other.x).abs() <= f64::EPSILON
-            && (self.y - other.y).abs() <= f64::EPSILON
-            && (self.z - other.z).abs() <= f64::EPSILON
+            && (self.x - other.x).abs() <= VECTOR_IDENTITY
+            && (self.y - other.y).abs() <= VECTOR_IDENTITY
+            && (self.z - other.z).abs() <= VECTOR_IDENTITY
     }
 }
 
@@ -136,6 +138,11 @@ impl Vector3D {
     /// Reduce length to 1.
     pub fn normalized(&self) -> Self {
         *self / self.length()
+    }
+
+    /// Reversed vector.
+    pub fn reversed(&self) -> Self {
+        *self * -1.0
     }
 
     pub fn px() -> Self {
@@ -227,9 +234,9 @@ impl PartialEq for Point3D {
         [self.x, self.y, self.z, other.x, other.y, other.z]
             .iter()
             .all(|x| x.is_finite())
-            && (self.x - other.x).abs() <= f64::EPSILON
-            && (self.y - other.y).abs() <= f64::EPSILON
-            && (self.z - other.z).abs() <= f64::EPSILON
+            && (self.x - other.x).abs() <= SURFACE_INCLUSION
+            && (self.y - other.y).abs() <= SURFACE_INCLUSION
+            && (self.z - other.z).abs() <= SURFACE_INCLUSION
     }
 }
 

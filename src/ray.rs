@@ -1,4 +1,6 @@
 use crate::geometry::{Point3D, Shape, Vector3D, VOP};
+
+#[derive(Debug, Clone)]
 pub struct Ray {
     pub origin: Point3D,
     pub direction: Vector3D,
