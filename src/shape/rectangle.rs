@@ -47,8 +47,8 @@ impl Shape for RectangleShape {
         let l1 = from_origin.dot(&self.normal.cross(&self.orientation)).abs();
         l0 <= self.size.0 / 2.0 && l1 <= self.size.1 / 2.0
     }
-    fn origin(&self) -> &Point3D {
-        &self.origin
+    fn origin(&self) -> Point3D {
+        self.origin
     }
 }
 

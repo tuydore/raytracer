@@ -18,7 +18,7 @@ pub trait Surface {
 
     fn vop_below_at(&self, point: &Point3D) -> &VOP;
 
-    fn sop_at(&self, point: &Point3D) -> &SOP;
+    fn sop_at(&self, point: &Point3D) -> SOP;
 
     fn bounce(&self, ray: &mut Ray) -> BounceResult {
         // TODO: clean this up
@@ -48,7 +48,7 @@ pub trait Surface {
                 }
                 BounceResult::Error
             }
-            SOP::Light(r, g, b) => BounceResult::Count(*r, *g, *b),
+            SOP::Light(r, g, b) => BounceResult::Count(r, g, b),
             SOP::Dark => BounceResult::Kill,
         }
     }

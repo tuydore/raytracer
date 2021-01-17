@@ -31,14 +31,40 @@ fn main() {
         Point3D::new(0.0, 0.0, 0.0),
         Vector3D::pz(),
         Vector3D::py(),
+        (255, 255, 255),
         2.0,
         air,
         air,
     );
     // let mut checkerboard = checkerboard_xy(1.0, 20);
 
-    let sphere_center = Point3D::new(0.0, 0.0, 2.0);
-    let sphere = Sphere::new(sphere_center, 2.0, SOP::Reflect, air, VOP::new(1.0));
+    let mut spheres = Vec::new();
+
+    spheres.push(Sphere::new(
+        Point3D::new(6.0, 6.0, 2.0),
+        2.0,
+        SOP::Refract,
+        air,
+        VOP::new(1.5),
+    ));
+
+    spheres.push(Sphere::new(
+        Point3D::new(0.0, 0.0, 2.0),
+        2.0,
+        SOP::Light(94, 39, 80),
+        air,
+        VOP::new(1.5),
+    ));
+
+    for (x, y) in [(0.0, 6.0), (6.0, 0.0)].iter() {
+        spheres.push(Sphere::new(
+            Point3D::new(*x, *y, 2.0),
+            2.0,
+            SOP::Reflect,
+            air,
+            VOP::new(1.0),
+        ))
+    }
 
     let g = Vector3D::new(-1.0, -1.0, -0.5);
     let camera = Camera::new(
@@ -50,11 +76,16 @@ fn main() {
         air,
     );
 
+    let mut scene: Vec<Box<dyn Surface>> = vec![Box::new(checkerboard)];
+    for sph in spheres {
+        scene.push(Box::new(sph));
+    }
+
     println!("{:?}", camera.screen_resolution());
-    let result = camera.look(&[Box::new(checkerboard), Box::new(sphere)]);
+    let result = camera.look(&scene);
     // println!("{:?}", result);
     camera.save_jpg(
-        "/home/tuydore/repositories/raytracer/results/glass_sphere_reflect.tiff",
+        "/home/tuydore/repositories/raytracer/results/glass_spheres_mix.jpg",
         result,
     );
 }

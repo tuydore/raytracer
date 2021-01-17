@@ -28,8 +28,8 @@ impl Shape for InfinitePlaneShape {
     fn contains(&self, point: &Point3D) -> bool {
         plane_contains_point(&self.origin, &self.normal, point)
     }
-    fn origin(&self) -> &Point3D {
-        &self.origin
+    fn origin(&self) -> Point3D {
+        self.origin
     }
 }
 

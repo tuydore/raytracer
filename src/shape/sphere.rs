@@ -1,4 +1,4 @@
-use super::Shape;
+use super::{pick_closest_intersection, Shape};
 use crate::{Point3D, Ray, Vector3D, SURFACE_INCLUSION};
 
 pub struct SphereShape {
@@ -48,39 +48,7 @@ impl SphereShape {
 
 impl Shape for SphereShape {
     fn intersection(&self, ray: &Ray) -> Option<Point3D> {
-        // get all line intersections
-        let mut line_intersections = self.line_intersection(&ray.origin, &ray.direction);
-
-        // filter out the ray's current position
-        line_intersections = line_intersections
-            .into_iter()
-            .filter(|p| *p != ray.origin)
-            .collect();
-
-        // filter out line intersections that are behind the ray's direction
-        line_intersections = line_intersections
-            .into_iter()
-            .filter(|p| (*p - ray.origin).dot(&ray.direction) >= 0.0)
-            .collect();
-
-        match line_intersections.len() {
-            0 => None,
-            1 => Some(line_intersections[0]),
-            // QUESTION: can this be inferred from definition of `line_intersection`?
-            2 => {
-                let squared_distances: Vec<f64> = line_intersections
-                    .iter()
-                    .map(|p| (*p - ray.origin).length_squared())
-                    .collect();
-                let min_index = if squared_distances[0] < squared_distances[1] {
-                    0
-                } else {
-                    1
-                };
-                Some(line_intersections[min_index])
-            },
-            _ => panic!("A line cannot intersect a sphere in more than 2 points. You are either using non-Euclidean geometry or something is majorly screwed up.")
-        }
+        pick_closest_intersection(self.line_intersection(&ray.origin, &ray.direction), ray)
     }
 
     fn contains(&self, point: &Point3D) -> bool {
@@ -95,8 +63,8 @@ impl Shape for SphereShape {
         }
     }
 
-    fn origin(&self) -> &Point3D {
-        &self.center
+    fn origin(&self) -> Point3D {
+        self.center
     }
 }
 

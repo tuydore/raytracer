@@ -1,9 +1,13 @@
 mod infiniteplane;
+mod paraboloid;
 mod rectangle;
 mod sphere;
 
 use crate::{Point3D, Ray, Vector3D, SURFACE_INCLUSION};
-pub use {infiniteplane::InfinitePlaneShape, rectangle::RectangleShape, sphere::SphereShape};
+pub use {
+    infiniteplane::InfinitePlaneShape, paraboloid::ParaboloidShape, rectangle::RectangleShape,
+    sphere::SphereShape,
+};
 
 pub trait Shape {
     fn intersection(&self, ray: &Ray) -> Option<Point3D>;
@@ -12,7 +16,7 @@ pub trait Shape {
     fn intersects(&self, ray: &Ray) -> bool {
         self.intersection(ray).is_some()
     }
-    fn origin(&self) -> &Point3D;
+    fn origin(&self) -> Point3D;
 }
 
 pub fn plane_intersects_line(
@@ -60,4 +64,40 @@ pub fn plane_intersects_ray(
         }
     }
     None
+}
+
+/// Pick closest ray intersection out of all possible line intersections.
+pub fn pick_closest_intersection(
+    mut line_intersections: Vec<Point3D>,
+    ray: &Ray,
+) -> Option<Point3D> {
+    // filter out the ray's current position
+    line_intersections = line_intersections
+        .into_iter()
+        .filter(|p| *p != ray.origin)
+        .collect();
+
+    // filter out line intersections that are behind the ray's direction
+    line_intersections = line_intersections
+        .into_iter()
+        .filter(|p| (*p - ray.origin).dot(&ray.direction) >= 0.0)
+        .collect();
+
+    match line_intersections.len() {
+        0 => None,
+        1 => Some(line_intersections[0]),
+        // QUESTION: can this be inferred from definition of `line_intersection`?
+        _ => {
+            let squared_distances: Vec<f64> = line_intersections
+                .iter()
+                .map(|p| (*p - ray.origin).length_squared())
+                .collect();
+            let min_index = if squared_distances[0] < squared_distances[1] {
+                0
+            } else {
+                1
+            };
+            Some(line_intersections[min_index])
+        }
+    }
 }
