@@ -1,7 +1,7 @@
-use raytracer::{Camera, Plane, Point3D, Ray, Sphere, Vector3D, SOP, VOP};
+use raytracer::{Camera, Plane, Point3D, Sphere, Vector3D, SOP, VOP};
 
 fn main() {
-    let plane = Plane::new(
+    let _plane = Plane::new(
         Point3D::new(0.0, 0.0, 0.0),
         Vector3D::new(0.0, 0.0, 1.0),
         SOP::Reflect,

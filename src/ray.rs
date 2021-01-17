@@ -1,4 +1,4 @@
-use crate::geometry::{Point3D, Shape, Vector3D, VOP};
+use crate::{Point3D, Surface, Vector3D, VOP};
 
 #[derive(Debug, Clone)]
 pub struct Ray {
@@ -18,11 +18,20 @@ impl Ray {
 
     // TODO: avoid repetition by calculating first_intersection twice
     /// Launch a ray through the system and fetch its final return value.
-    pub fn launch(&mut self, shapes: &[Box<dyn Shape>]) -> BounceResult {
+    pub fn launch(&mut self, surfaces: &[Box<dyn Surface>]) -> BounceResult {
         loop {
             // get all first intersections with surfaces and distances to them
-            let intersections: Vec<Option<(Point3D, f64)>> =
-                shapes.iter().map(|s| s.intersection(self)).collect();
+            let intersections: Vec<Option<(Point3D, f64)>> = surfaces
+                .iter()
+                .map(|s| s.geometry().intersection(self))
+                .map(|p| {
+                    if let Some(point) = p {
+                        Some((point, point.distance_squared_to(&self.origin)))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
 
             // if no more intersections, return as Dark
             if intersections.iter().all(|x| x.is_none()) {
@@ -40,7 +49,7 @@ impl Ray {
             }
 
             // bounce ray off closest shape
-            match shapes[index].bounce(self) {
+            match surfaces[index].bounce_at(&intersections[index].unwrap().0, self) {
                 BounceResult::Continue => continue,
                 BounceResult::Error => panic!("Something went wrong!"),
                 br => return br,

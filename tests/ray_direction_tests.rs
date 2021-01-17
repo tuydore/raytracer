@@ -1,7 +1,4 @@
-use raytracer::{
-    geometry::Shape, ray::BounceResult, Plane, Point3D, Ray, Sphere, Vector3D, SOP,
-    VECTOR_IDENTITY, VOP,
-};
+use raytracer::{Plane, Point3D, Ray, Sphere, Vector3D, SOP, VECTOR_IDENTITY, VOP};
 
 fn air() -> VOP {
     VOP::new(1.0)
@@ -13,6 +10,8 @@ fn glass() -> VOP {
 
 #[cfg(test)]
 mod refraction_tests {
+    use raytracer::Surface;
+
     use super::*;
 
     fn refractive_plane() -> Box<Plane> {
@@ -45,11 +44,15 @@ mod refraction_tests {
             air(),
         );
         let mut ray = original_ray.clone();
+        let intersection = refractive_plane()
+            .geometry()
+            .intersection(&original_ray)
+            .unwrap();
         refractive_plane().as_ref().bounce(&mut ray);
 
         // calculate via snell's law
         let normal = refractive_plane()
-            .as_ref()
+            .geometry()
             .normal_at(&ray.origin)
             .unwrap()
             .normalized();
@@ -58,8 +61,14 @@ mod refraction_tests {
             .acos();
         let theta_t = (-1.0 * normal).dot(&ray.direction.normalized()).acos();
         assert!(
-            refractive_plane().vop_above().index_of_refraction * theta_i.sin()
-                - refractive_plane().vop_below().index_of_refraction * theta_t.sin()
+            refractive_plane()
+                .vop_above_at(&intersection)
+                .index_of_refraction
+                * theta_i.sin()
+                - refractive_plane()
+                    .vop_below_at(&intersection)
+                    .index_of_refraction
+                    * theta_t.sin()
                 <= f64::EPSILON
         );
     }
@@ -71,20 +80,30 @@ mod refraction_tests {
             Vector3D::new(-0.2, 0.0, 1.0),
             glass(),
         );
+        let intersection = refractive_plane()
+            .geometry()
+            .intersection(&original_ray)
+            .unwrap();
         let mut ray = original_ray.clone();
         refractive_plane().as_ref().bounce(&mut ray);
 
         // calculate via snell's law
         let normal = refractive_plane()
-            .as_ref()
+            .geometry()
             .normal_at(&ray.origin)
             .unwrap()
             .normalized();
         let theta_i = normal.dot(&(original_ray.direction).normalized()).acos();
         let theta_t = normal.dot(&ray.direction.normalized());
         assert!(
-            refractive_plane().vop_below().index_of_refraction * theta_i.sin()
-                - refractive_plane().vop_above().index_of_refraction * theta_t.sin()
+            refractive_plane()
+                .vop_below_at(&intersection)
+                .index_of_refraction
+                * theta_i.sin()
+                - refractive_plane()
+                    .vop_above_at(&intersection)
+                    .index_of_refraction
+                    * theta_t.sin()
                 <= f64::EPSILON
         );
     }
@@ -92,6 +111,8 @@ mod refraction_tests {
 
 #[cfg(test)]
 mod reflection_tests {
+    use raytracer::Surface;
+
     use super::*;
 
     fn reflective_sphere_air() -> Box<Sphere> {
@@ -114,6 +135,7 @@ mod reflection_tests {
         ))
     }
 
+    #[allow(dead_code)]
     fn reflective_plane() -> Box<Plane> {
         Box::new(Plane::new(
             Point3D::new(0.0, 0.0, 0.0),

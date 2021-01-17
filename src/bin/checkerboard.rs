@@ -1,4 +1,4 @@
-use raytracer::{Camera, Plane, Point3D, Ray, Rectangle, Sphere, Vector3D, SOP, VOP};
+use raytracer::{Camera, Point3D, Rectangle, Sphere, Vector3D, SOP, VOP};
 
 fn main() {
     let air = VOP::new(1.0);

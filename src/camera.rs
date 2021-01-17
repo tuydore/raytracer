@@ -1,5 +1,5 @@
-use crate::{geometry::Shape, ray::BounceResult, Point3D, Ray, Vector3D, VOP};
-use image::{GrayImage, Luma, Rgb, RgbImage};
+use crate::{ray::BounceResult, Point3D, Ray, Surface, Vector3D, VOP};
+use image::{Rgb, RgbImage};
 
 pub struct Camera {
     origin: Point3D,
@@ -85,7 +85,7 @@ impl Camera {
     }
 
     /// Capture the scene before the camera's eyes.
-    pub fn look(&self, scene: &[Box<dyn Shape>]) -> Vec<(u8, u8, u8)> {
+    pub fn look(&self, scene: &[Box<dyn Surface>]) -> Vec<(u8, u8, u8)> {
         let mut result = Vec::new();
 
         for (_i, pxc) in self.pixel_centers().into_iter().enumerate() {

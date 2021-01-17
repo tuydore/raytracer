@@ -1,10 +1,7 @@
-use raytracer::{
-    geometry::{sop, Shape},
-    Camera, Plane, Point3D, Ray, Rectangle, Sphere, Vector3D, SOP, VOP,
-};
+use raytracer::{Camera, Checkerboard, Point3D, Rectangle, Sphere, Surface, Vector3D, SOP, VOP};
 
-fn checkerboard_xy(side: f64, num: usize) -> Vec<Box<dyn Shape>> {
-    let mut result: Vec<Box<dyn Shape>> = Vec::new();
+fn checkerboard_xy(side: f64, num: usize) -> Vec<Box<dyn Surface>> {
+    let mut result: Vec<Box<dyn Surface>> = Vec::new();
     for i in 0..=num {
         for j in 0..=num {
             let surface = if (i + j) % 2 == 0 {
@@ -30,27 +27,34 @@ fn checkerboard_xy(side: f64, num: usize) -> Vec<Box<dyn Shape>> {
 fn main() {
     let air = VOP::new(1.0);
 
-    let mut checkerboard = checkerboard_xy(1.0, 20);
-
-    let sphere_center = Point3D::new(10.0, 10.0, 2.0);
-    let sphere = Sphere::new(sphere_center, 2.0, SOP::Refract, air, VOP::new(1.5));
-
-    let g = Vector3D::new(0.0, 0.0, -1.0);
-    let camera = Camera::new(
-        Point3D::new(9.0, 9.0, 30.0),
-        g,
-        Vector3D::px(), // g.cross(&Vector3D::new(-1.0, 1.0, 0.0)),
-        (20.0, 30.0),
-        100.0,
+    let checkerboard = Checkerboard::new(
+        Point3D::new(0.0, 0.0, 0.0),
+        Vector3D::pz(),
+        Vector3D::py(),
+        2.0,
+        air,
         air,
     );
-    checkerboard.push(Box::new(sphere));
+    // let mut checkerboard = checkerboard_xy(1.0, 20);
+
+    let sphere_center = Point3D::new(0.0, 0.0, 2.0);
+    let sphere = Sphere::new(sphere_center, 2.0, SOP::Reflect, air, VOP::new(1.0));
+
+    let g = Vector3D::new(-1.0, -1.0, -0.5);
+    let camera = Camera::new(
+        Point3D::new(30.0, 30.0, 15.0),
+        g,
+        g.cross(&Vector3D::new(1.0, -1.0, 0.0)),
+        (18.0, 32.0),
+        200.0,
+        air,
+    );
 
     println!("{:?}", camera.screen_resolution());
-    let result = camera.look(&checkerboard);
+    let result = camera.look(&[Box::new(checkerboard), Box::new(sphere)]);
     // println!("{:?}", result);
     camera.save_jpg(
-        "/home/tuydore/repositories/raytracer/results/glass_sphere_above.tiff",
+        "/home/tuydore/repositories/raytracer/results/glass_sphere_reflect.tiff",
         result,
     );
 }
