@@ -1,11 +1,10 @@
 use raytracer::{
-    Camera, Checkerboard, Plane, Point3D, Rectangle, Sphere, Surface, Vector3D, ZParaboloid, SOP,
-    VOP,
+    Camera, Checkerboard, Plane, Point3D, Sphere, Surface, Vector3D, ZParaboloid, SOP, VOP,
 };
 
 fn main() {
     let air = VOP::new(1.0);
-    let glass = VOP::new(1.5);
+    let _glass = VOP::new(1.5);
 
     // TODO: refraction
     let paraboloid = ZParaboloid::new(0.0, 0.0, 0.0, -1.0, -1.0, SOP::Reflect, air, air);

@@ -1,28 +1,4 @@
-use raytracer::{Camera, Checkerboard, Point3D, Rectangle, Sphere, Surface, Vector3D, SOP, VOP};
-
-fn checkerboard_xy(side: f64, num: usize) -> Vec<Box<dyn Surface>> {
-    let mut result: Vec<Box<dyn Surface>> = Vec::new();
-    for i in 0..=num {
-        for j in 0..=num {
-            let surface = if (i + j) % 2 == 0 {
-                SOP::Light(255, 255, 255)
-            } else {
-                SOP::Dark
-            };
-            let rectangle = Rectangle::new(
-                Point3D::new(side * (0.5 + i as f64), side * (0.5 + j as f64), 0.0),
-                Vector3D::pz(),
-                Vector3D::px(),
-                (side, side),
-                surface,
-                VOP::new(1.0),
-                VOP::new(1.0),
-            );
-            result.push(Box::new(rectangle));
-        }
-    }
-    result
-}
+use raytracer::{Camera, Checkerboard, Point3D, Sphere, Surface, Vector3D, SOP, VOP};
 
 fn main() {
     let air = VOP::new(1.0);
