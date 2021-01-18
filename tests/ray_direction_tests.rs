@@ -14,14 +14,14 @@ mod refraction_tests {
 
     use super::*;
 
-    fn refractive_plane() -> Box<Plane> {
-        Box::new(Plane::new(
+    fn refractive_plane() -> Plane {
+        Plane::new(
             Point3D::new(0.0, 0.0, 0.0),
             Vector3D::new(0.0, 0.0, 1.0),
             SOP::Refract,
             air(),
             glass(),
-        ))
+        )
     }
 
     #[test]
@@ -31,7 +31,7 @@ mod refraction_tests {
             Vector3D::new(0.0, 0.0, -1.0),
             air(),
         );
-        refractive_plane().as_ref().bounce(&mut downward_ray);
+        downward_ray.bounce_unchecked(&refractive_plane(), &Point3D::new(0.0, 0.0, 0.0));
         assert_eq!(downward_ray.direction.normalized(), Vector3D::mz());
         assert_eq!(downward_ray.origin, Point3D::new(0.0, 0.0, 0.0));
     }
@@ -48,7 +48,7 @@ mod refraction_tests {
             .geometry()
             .intersection(&original_ray)
             .unwrap();
-        refractive_plane().as_ref().bounce(&mut ray);
+        ray.bounce_unchecked(&refractive_plane(), &Point3D::new(0.0, 0.0, 0.0));
 
         // calculate via snell's law
         let normal = refractive_plane()
@@ -85,7 +85,7 @@ mod refraction_tests {
             .intersection(&original_ray)
             .unwrap();
         let mut ray = original_ray.clone();
-        refractive_plane().as_ref().bounce(&mut ray);
+        ray.bounce_unchecked(&refractive_plane(), &Point3D::new(0.0, 0.0, 0.0));
 
         // calculate via snell's law
         let normal = refractive_plane()
@@ -111,39 +111,31 @@ mod refraction_tests {
 
 #[cfg(test)]
 mod reflection_tests {
-    use raytracer::Surface;
-
     use super::*;
 
-    fn reflective_sphere_air() -> Box<Sphere> {
-        Box::new(Sphere::new(
-            Point3D::new(0.0, 0.0, 0.0),
-            1.0,
-            SOP::Reflect,
-            air(),
-            air(),
-        ))
+    fn reflective_sphere_air() -> Sphere {
+        Sphere::new(Point3D::new(0.0, 0.0, 0.0), 1.0, SOP::Reflect, air(), air())
     }
 
-    fn reflective_sphere_glass() -> Box<Sphere> {
-        Box::new(Sphere::new(
+    fn reflective_sphere_glass() -> Sphere {
+        Sphere::new(
             Point3D::new(0.0, 0.0, 0.0),
             1.0,
             SOP::Reflect,
             air(),
             glass(),
-        ))
+        )
     }
 
     #[allow(dead_code)]
-    fn reflective_plane() -> Box<Plane> {
-        Box::new(Plane::new(
+    fn reflective_plane() -> Plane {
+        Plane::new(
             Point3D::new(0.0, 0.0, 0.0),
             Vector3D::new(0.0, 0.0, 1.0),
             SOP::Reflect,
             air(),
             air(),
-        ))
+        )
     }
 
     #[test]
@@ -153,7 +145,7 @@ mod reflection_tests {
             Vector3D::new(-1.0, 0.0, -1.0),
             air(),
         );
-        reflective_sphere_air().as_ref().bounce(&mut ray);
+        ray.bounce_unchecked(&reflective_sphere_air(), &Point3D::new(0.0, 0.0, 1.0));
         assert_eq!(ray.origin, Point3D::new(0.0, 0.0, 1.0));
         assert!(
             (ray.direction.normalized() - Vector3D::new(-1.0, 0.0, 1.0).normalized())
@@ -169,7 +161,7 @@ mod reflection_tests {
             Vector3D::new(-1.0, 0.0, -1.0),
             air(),
         );
-        reflective_sphere_glass().as_ref().bounce(&mut ray);
+        ray.bounce_unchecked(&reflective_sphere_glass(), &Point3D::new(0.0, 0.0, 1.0));
         assert_eq!(ray.origin, Point3D::new(0.0, 0.0, 1.0));
         assert!(
             (ray.direction.normalized() - Vector3D::new(-1.0, 0.0, 1.0).normalized())
