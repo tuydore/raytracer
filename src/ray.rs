@@ -2,14 +2,14 @@ use crate::{Point3D, Surface, Vector3D, SOP, VOP};
 use std::error::Error;
 
 #[derive(Debug, Clone)]
-pub struct Ray {
+pub struct Ray<'a> {
     pub origin: Point3D,
     pub direction: Vector3D,
-    pub vop: VOP,
+    pub vop: &'a VOP,
 }
 
-impl Ray {
-    pub fn new(origin: Point3D, direction: Vector3D, vop: VOP) -> Self {
+impl<'a> Ray<'a> {
+    pub fn new(origin: Point3D, direction: Vector3D, vop: &'a VOP) -> Ray<'a> {
         Self {
             origin,
             direction,
@@ -19,7 +19,7 @@ impl Ray {
 
     // TODO: avoid repetition by calculating first_intersection twice
     /// Launch a ray through the system and fetch its final return value.
-    pub fn launch(&mut self, surfaces: &[Box<dyn Surface>]) -> BounceResult {
+    pub fn launch(&mut self, surfaces: &[&'a dyn Surface]) -> BounceResult {
         loop {
             // get all first intersections with surfaces and distances to them
             let intersections: Vec<Option<(Point3D, f64)>> = surfaces
@@ -50,8 +50,7 @@ impl Ray {
             }
 
             // bounce ray off closest shape
-            match self.bounce_unchecked(surfaces[index].as_ref(), &intersections[index].unwrap().0)
-            {
+            match self.bounce_unchecked(surfaces[index], &intersections[index].unwrap().0) {
                 BounceResult::Continue => continue,
                 BounceResult::Error => panic!("Something went wrong!"),
                 br => return br,
@@ -64,9 +63,9 @@ impl Ray {
     /// Otherwise return an error.
     fn get_interaction_parameters_unchecked(
         &self,
-        surface: &dyn Surface,
+        surface: &'a dyn Surface,
         point: &Point3D,
-    ) -> Result<(Vector3D, VOP, VOP), Box<dyn Error>> {
+    ) -> Result<(Vector3D, &'a VOP, &'a VOP), Box<dyn Error>> {
         // get VOPs above and below
         let vop_above = surface.vop_above_at(&point);
         let vop_below = surface.vop_below_at(&point);
@@ -80,7 +79,7 @@ impl Ray {
         // ray is inbound from medium into which normal points
         if normal.dot(&self.direction) <= 0.0 {
             // check that ray VOP and above VOP match
-            if self.vop != *vop_above {
+            if self.vop != vop_above {
                 panic!(
                     "VOP mismatch:\nray: {:#?}\nfrom: {:?}\ninto: {:?}\nintersection: {:?}\nnormal: {:?}",
                     self,
@@ -90,10 +89,10 @@ impl Ray {
                     normal,
                 )
             }
-            Ok((normal, *vop_above, *vop_below))
+            Ok((normal, vop_above, vop_below))
         // ray is inbound from other side of boundary
         } else {
-            if self.vop != *vop_below {
+            if self.vop != vop_below {
                 panic!(
                     "VOP mismatch:\nray: {:#?}\nfrom: {:?}\ninto: {:?}\nintersection: {:?}\nnormal: {:?}",
                     self,
@@ -103,11 +102,11 @@ impl Ray {
                     normal,
                 )
             }
-            Ok((-1.0 * normal, *vop_below, *vop_above))
+            Ok((-1.0 * normal, vop_below, vop_above))
         }
     }
 
-    pub fn bounce_unchecked(&mut self, surface: &dyn Surface, point: &Point3D) -> BounceResult {
+    pub fn bounce_unchecked(&mut self, surface: &'a dyn Surface, point: &Point3D) -> BounceResult {
         let sop = surface.sop_at(point);
         match sop {
             SOP::Reflect => {
@@ -146,8 +145,8 @@ impl Ray {
         &mut self,
         intersection: &Point3D,
         normal: &Vector3D,
-        vop_above: &VOP,
-        vop_below: &VOP,
+        vop_above: &'a VOP,
+        vop_below: &'a VOP,
     ) {
         // ratio of n_above / n_below
         let nanb = vop_above.index_of_refraction / vop_below.index_of_refraction;
@@ -170,7 +169,7 @@ impl Ray {
             self.direction * nanb + normal * (nanb * cos_theta_i - (1.0 - sin_sq_theta_t).sqrt());
 
         // update ray VOP
-        self.vop = *vop_below;
+        self.vop = vop_below;
     }
 }
 

@@ -3,23 +3,23 @@ use crate::{
     Point3D, Shape, Surface, Vector3D, SOP, VOP,
 };
 
-pub struct Rectangle {
+pub struct Rectangle<'a> {
     geometry: RectangleShape,
     sop: SOP,
-    vop_above: VOP,
-    vop_below: VOP,
+    vop_above: &'a VOP,
+    vop_below: &'a VOP,
 }
 
-impl Rectangle {
+impl<'a> Rectangle<'a> {
     pub fn new(
         origin: Point3D,
         normal: Vector3D,
         orientation: Vector3D,
         size: (f64, f64),
         sop: SOP,
-        vop_above: VOP,
-        vop_below: VOP,
-    ) -> Self {
+        vop_above: &'a VOP,
+        vop_below: &'a VOP,
+    ) -> Rectangle<'a> {
         Self {
             geometry: RectangleShape::new(origin, normal, orientation, size),
             sop,
@@ -29,14 +29,14 @@ impl Rectangle {
     }
 }
 
-impl Surface for Rectangle {
+impl<'a> Surface<'a> for Rectangle<'a> {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _point: &Point3D) -> &VOP {
+    fn vop_above_at(&self, _point: &Point3D) -> &'a VOP {
         &self.vop_above
     }
-    fn vop_below_at(&self, _point: &Point3D) -> &VOP {
+    fn vop_below_at(&self, _point: &Point3D) -> &'a VOP {
         &self.vop_below
     }
     fn sop_at(&self, _point: &Point3D) -> SOP {
@@ -44,21 +44,21 @@ impl Surface for Rectangle {
     }
 }
 
-pub struct Plane {
+pub struct Plane<'a> {
     geometry: InfinitePlaneShape,
     sop: SOP,
-    vop_above: VOP,
-    vop_below: VOP,
+    vop_above: &'a VOP,
+    vop_below: &'a VOP,
 }
 
-impl Plane {
+impl<'a> Plane<'a> {
     pub fn new(
         origin: Point3D,
         normal: Vector3D,
         sop: SOP,
-        vop_above: VOP,
-        vop_below: VOP,
-    ) -> Self {
+        vop_above: &'a VOP,
+        vop_below: &'a VOP,
+    ) -> Plane<'a> {
         Self {
             geometry: InfinitePlaneShape::new(origin, normal),
             sop,
@@ -68,14 +68,14 @@ impl Plane {
     }
 }
 
-impl Surface for Plane {
+impl<'a> Surface<'a> for Plane<'a> {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _: &Point3D) -> &VOP {
+    fn vop_above_at(&self, _: &Point3D) -> &'a VOP {
         &self.vop_above
     }
-    fn vop_below_at(&self, _: &Point3D) -> &VOP {
+    fn vop_below_at(&self, _: &Point3D) -> &'a VOP {
         &self.vop_below
     }
     fn sop_at(&self, _: &Point3D) -> SOP {
@@ -83,15 +83,21 @@ impl Surface for Plane {
     }
 }
 
-pub struct Sphere {
+pub struct Sphere<'a> {
     geometry: SphereShape,
     sop: SOP,
-    vop_above: VOP,
-    vop_below: VOP,
+    vop_above: &'a VOP,
+    vop_below: &'a VOP,
 }
 
-impl Sphere {
-    pub fn new(center: Point3D, radius: f64, sop: SOP, vop_above: VOP, vop_below: VOP) -> Self {
+impl<'a> Sphere<'a> {
+    pub fn new(
+        center: Point3D,
+        radius: f64,
+        sop: SOP,
+        vop_above: &'a VOP,
+        vop_below: &'a VOP,
+    ) -> Sphere<'a> {
         Self {
             geometry: SphereShape::new(center, radius),
             sop,
@@ -101,14 +107,14 @@ impl Sphere {
     }
 }
 
-impl Surface for Sphere {
+impl<'a> Surface<'a> for Sphere<'a> {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _point: &Point3D) -> &VOP {
+    fn vop_above_at(&self, _point: &Point3D) -> &'a VOP {
         &self.vop_above
     }
-    fn vop_below_at(&self, _point: &Point3D) -> &VOP {
+    fn vop_below_at(&self, _point: &Point3D) -> &'a VOP {
         &self.vop_below
     }
     fn sop_at(&self, _point: &Point3D) -> SOP {
@@ -116,25 +122,25 @@ impl Surface for Sphere {
     }
 }
 
-pub struct Checkerboard {
+pub struct Checkerboard<'a> {
     geometry: InfinitePlaneShape,
     color: (u8, u8, u8),
     orientation: Vector3D,
     tile_size: f64,
-    vop_above: VOP,
-    vop_below: VOP,
+    vop_above: &'a VOP,
+    vop_below: &'a VOP,
 }
 
-impl Checkerboard {
+impl<'a> Checkerboard<'a> {
     pub fn new(
         origin: Point3D,
         normal: Vector3D,
         orientation: Vector3D,
         color: (u8, u8, u8),
         tile_size: f64,
-        vop_below: VOP,
-        vop_above: VOP,
-    ) -> Self {
+        vop_below: &'a VOP,
+        vop_above: &'a VOP,
+    ) -> Checkerboard<'a> {
         Self {
             geometry: InfinitePlaneShape::new(origin, normal),
             color,
@@ -146,14 +152,14 @@ impl Checkerboard {
     }
 }
 
-impl Surface for Checkerboard {
+impl<'a> Surface<'a> for Checkerboard<'a> {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _: &Point3D) -> &VOP {
+    fn vop_above_at(&self, _: &Point3D) -> &'a VOP {
         &self.vop_above
     }
-    fn vop_below_at(&self, _: &Point3D) -> &VOP {
+    fn vop_below_at(&self, _: &Point3D) -> &'a VOP {
         &self.vop_below
     }
     fn sop_at(&self, point: &Point3D) -> SOP {
@@ -177,14 +183,14 @@ impl Surface for Checkerboard {
     }
 }
 
-pub struct ZParaboloid {
+pub struct ZParaboloid<'a> {
     geometry: ParaboloidShape,
     sop: SOP,
-    vop_above: VOP,
-    vop_below: VOP,
+    vop_above: &'a VOP,
+    vop_below: &'a VOP,
 }
 
-impl ZParaboloid {
+impl<'a> ZParaboloid<'a> {
     pub fn new(
         x0: f64,
         y0: f64,
@@ -192,9 +198,9 @@ impl ZParaboloid {
         asq: f64,
         bsq: f64,
         sop: SOP,
-        vop_above: VOP,
-        vop_below: VOP,
-    ) -> Self {
+        vop_above: &'a VOP,
+        vop_below: &'a VOP,
+    ) -> ZParaboloid<'a> {
         Self {
             geometry: ParaboloidShape::new(x0, y0, z0, asq, bsq),
             sop,
@@ -204,14 +210,14 @@ impl ZParaboloid {
     }
 }
 
-impl Surface for ZParaboloid {
+impl<'a> Surface<'a> for ZParaboloid<'a> {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _: &Point3D) -> &VOP {
+    fn vop_above_at(&self, _: &Point3D) -> &'a VOP {
         &self.vop_above
     }
-    fn vop_below_at(&self, _: &Point3D) -> &VOP {
+    fn vop_below_at(&self, _: &Point3D) -> &'a VOP {
         &self.vop_below
     }
     fn sop_at(&self, _: &Point3D) -> SOP {

@@ -1,10 +1,10 @@
 use raytracer::{ray::BounceResult, Plane, Point3D, Ray, Sphere, Vector3D, SOP, VOP};
 
-fn downwards_ray() -> Ray {
+fn downwards_ray(vop: &VOP) -> Ray {
     Ray::new(
         Point3D::new(0.0, 0.0, 10.0),
         Vector3D::new(0.0, 0.0, -1.0),
-        VOP::new(1.0),
+        vop,
     )
 }
 
@@ -12,55 +12,46 @@ fn downwards_ray() -> Ray {
 mod sphere_tests {
     use super::*;
 
-    fn light_sphere() -> Box<Sphere> {
-        Box::new(Sphere::new(
+    fn light_sphere(vop: &VOP) -> Sphere {
+        Sphere::new(
             Point3D::new(0.0, 0.0, 0.0),
             1.0,
             SOP::Light(255, 255, 255),
-            VOP::new(1.0),
-            VOP::new(1.0),
-        ))
+            vop,
+            vop,
+        )
     }
 
-    fn dark_sphere() -> Box<Sphere> {
-        Box::new(Sphere::new(
-            Point3D::new(0.0, 0.0, 0.0),
-            1.0,
-            SOP::Dark,
-            VOP::new(1.0),
-            VOP::new(1.0),
-        ))
+    fn dark_sphere(vop: &VOP) -> Sphere {
+        Sphere::new(Point3D::new(0.0, 0.0, 0.0), 1.0, SOP::Dark, vop, vop)
     }
 
-    fn reflective_sphere() -> Box<Sphere> {
-        Box::new(Sphere::new(
-            Point3D::new(0.0, 0.0, 0.0),
-            1.0,
-            SOP::Reflect,
-            VOP::new(1.0),
-            VOP::new(1.0),
-        ))
+    fn reflective_sphere(vop: &VOP) -> Sphere {
+        Sphere::new(Point3D::new(0.0, 0.0, 0.0), 1.0, SOP::Reflect, vop, vop)
     }
 
     #[test]
     fn counted_ray() {
-        let mut ray = downwards_ray();
-        assert_eq!(
-            ray.launch(&[light_sphere()]),
-            BounceResult::Count(255, 255, 255)
-        );
+        let air = VOP::new(1.0);
+        let sphere = light_sphere(&air);
+        let mut ray = downwards_ray(&air);
+        assert_eq!(ray.launch(&[&sphere]), BounceResult::Count(255, 255, 255));
     }
 
     #[test]
     fn killed_ray_at_dark_plane() {
-        let mut ray = downwards_ray();
-        assert_eq!(ray.launch(&[dark_sphere()]), BounceResult::Kill);
+        let air = VOP::new(1.0);
+        let mut ray = downwards_ray(&air);
+        let sphere = dark_sphere(&air);
+        assert_eq!(ray.launch(&[&sphere]), BounceResult::Kill);
     }
 
     #[test]
     fn killed_ray_no_more_intersections() {
-        let mut ray = downwards_ray();
-        assert_eq!(ray.launch(&[reflective_sphere()]), BounceResult::Kill);
+        let air = VOP::new(1.0);
+        let mut ray = downwards_ray(&air);
+        let sphere = reflective_sphere(&air);
+        assert_eq!(ray.launch(&[&sphere]), BounceResult::Kill);
     }
 }
 
@@ -68,55 +59,58 @@ mod sphere_tests {
 mod plane_tests {
     use super::*;
 
-    fn light_plane() -> Box<Plane> {
-        Box::new(Plane::new(
+    fn light_plane(vop: &VOP) -> Plane {
+        Plane::new(
             Point3D::new(0.0, 0.0, 0.0),
             Vector3D::new(0.0, 0.0, 1.0),
             SOP::Light(255, 255, 255),
-            VOP::new(1.0),
-            VOP::new(1.0),
-        ))
+            vop,
+            vop,
+        )
     }
 
-    fn dark_plane() -> Box<Plane> {
-        Box::new(Plane::new(
+    fn dark_plane(vop: &VOP) -> Plane {
+        Plane::new(
             Point3D::new(0.0, 0.0, 0.0),
             Vector3D::new(0.0, 0.0, 1.0),
             SOP::Dark,
-            VOP::new(1.0),
-            VOP::new(1.0),
-        ))
+            vop,
+            vop,
+        )
     }
 
-    fn reflective_plane() -> Box<Plane> {
-        Box::new(Plane::new(
+    fn reflective_plane(vop: &VOP) -> Plane {
+        Plane::new(
             Point3D::new(0.0, 0.0, 0.0),
             Vector3D::new(0.0, 0.0, 1.0),
             SOP::Reflect,
-            VOP::new(1.0),
-            VOP::new(1.0),
-        ))
+            vop,
+            vop,
+        )
     }
 
     #[test]
     fn counted_ray() {
-        let mut ray = downwards_ray();
-        assert_eq!(
-            ray.launch(&[light_plane()]),
-            BounceResult::Count(255, 255, 255)
-        );
+        let air = VOP::new(1.0);
+        let mut ray = downwards_ray(&air);
+        let plane = light_plane(&air);
+        assert_eq!(ray.launch(&[&plane]), BounceResult::Count(255, 255, 255));
     }
 
     #[test]
     fn killed_ray_at_dark_plane() {
-        let mut ray = downwards_ray();
-        assert_eq!(ray.launch(&[dark_plane()]), BounceResult::Kill);
+        let air = VOP::new(1.0);
+        let mut ray = downwards_ray(&air);
+        let plane = dark_plane(&air);
+        assert_eq!(ray.launch(&[&plane]), BounceResult::Kill);
     }
 
     #[test]
     fn killed_ray_no_more_intersections() {
-        let mut ray = downwards_ray();
-        assert_eq!(ray.launch(&[reflective_plane()]), BounceResult::Kill);
+        let air = VOP::new(1.0);
+        let mut ray = downwards_ray(&air);
+        let plane = reflective_plane(&air);
+        assert_eq!(ray.launch(&[&plane]), BounceResult::Kill);
     }
 }
 
@@ -126,60 +120,66 @@ mod rectangle_tests {
 
     use super::*;
 
-    fn light_rectangle() -> Box<Rectangle> {
-        Box::new(Rectangle::new(
+    fn light_rectangle(vop: &VOP) -> Rectangle {
+        Rectangle::new(
             Point3D::new(0.0, 0.0, 0.0),
             Vector3D::new(0.0, 0.0, 1.0),
             Vector3D::new(0.0, 1.0, 0.0),
             (2.0, 2.0),
             SOP::Light(255, 255, 255),
-            VOP::new(1.0),
-            VOP::new(1.0),
-        ))
+            vop,
+            vop,
+        )
     }
 
-    fn dark_rectangle() -> Box<Rectangle> {
-        Box::new(Rectangle::new(
+    fn dark_rectangle(vop: &VOP) -> Rectangle {
+        Rectangle::new(
             Point3D::new(0.0, 0.0, 0.0),
             Vector3D::new(0.0, 0.0, 1.0),
             Vector3D::new(0.0, 1.0, 0.0),
             (2.0, 2.0),
             SOP::Dark,
-            VOP::new(1.0),
-            VOP::new(1.0),
-        ))
+            vop,
+            vop,
+        )
     }
 
-    fn reflective_rectangle() -> Box<Rectangle> {
-        Box::new(Rectangle::new(
+    fn reflective_rectangle(vop: &VOP) -> Rectangle {
+        Rectangle::new(
             Point3D::new(0.0, 0.0, 0.0),
             Vector3D::new(0.0, 0.0, 1.0),
             Vector3D::new(0.0, 1.0, 0.0),
             (2.0, 2.0),
             SOP::Reflect,
-            VOP::new(1.0),
-            VOP::new(1.0),
-        ))
+            vop,
+            vop,
+        )
     }
 
     #[test]
     fn counted_ray() {
-        let mut ray = downwards_ray();
+        let air = VOP::new(1.0);
+        let mut ray = downwards_ray(&air);
+        let rectangle = light_rectangle(&air);
         assert_eq!(
-            ray.launch(&[light_rectangle()]),
+            ray.launch(&[&rectangle]),
             BounceResult::Count(255, 255, 255)
         );
     }
 
     #[test]
     fn killed_ray_at_dark_rectangle() {
-        let mut ray = downwards_ray();
-        assert_eq!(ray.launch(&[dark_rectangle()]), BounceResult::Kill);
+        let air = VOP::new(1.0);
+        let mut ray = downwards_ray(&air);
+        let rectangle = dark_rectangle(&air);
+        assert_eq!(ray.launch(&[&rectangle]), BounceResult::Kill);
     }
 
     #[test]
     fn killed_ray_no_more_intersections() {
-        let mut ray = downwards_ray();
-        assert_eq!(ray.launch(&[reflective_rectangle()]), BounceResult::Kill);
+        let air = VOP::new(1.0);
+        let mut ray = downwards_ray(&air);
+        let rectangle = reflective_rectangle(&air);
+        assert_eq!(ray.launch(&[&rectangle]), BounceResult::Kill);
     }
 }

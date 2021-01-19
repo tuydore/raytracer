@@ -10,12 +10,12 @@ pub enum SOP {
     Dark,
 }
 
-pub trait Surface {
+pub trait Surface<'a> {
     fn geometry(&self) -> &dyn Shape;
 
-    fn vop_above_at(&self, point: &Point3D) -> &VOP;
+    fn vop_above_at(&self, point: &Point3D) -> &'a VOP;
 
-    fn vop_below_at(&self, point: &Point3D) -> &VOP;
+    fn vop_below_at(&self, point: &Point3D) -> &'a VOP;
 
     fn sop_at(&self, point: &Point3D) -> SOP;
 }

@@ -69,10 +69,11 @@ mod tests {
     #[test]
     fn test_intersection() {
         let square = xy_square();
+        let air = VOP::new(1.0);
         let ray = Ray::new(
             Point3D::new(0.0, 0.0, 1.0),
             Vector3D::new(0.0, 1.0, -1.0),
-            VOP::new(1.0),
+            &air,
         );
         assert!(square.intersects(&ray));
         assert_eq!(square.intersection(&ray), Some(Point3D::new(0.0, 1.0, 0.0)));
@@ -81,10 +82,11 @@ mod tests {
     #[test]
     fn test_intersection_by_missing() {
         let square = xy_square();
+        let air = VOP::new(1.0);
         let ray = Ray::new(
             Point3D::new(0.0, 0.0, 1.0),
             Vector3D::new(0.0, 3.0, -1.0),
-            VOP::new(1.0),
+            &air,
         );
         assert!(!square.intersects(&ray));
         assert_eq!(square.intersection(&ray), None);
@@ -93,10 +95,11 @@ mod tests {
     #[test]
     fn test_no_intersection_by_direction() {
         let square = xy_square();
+        let air = VOP::new(1.0);
         let ray = Ray::new(
             Point3D::new(0.0, 0.0, 1.0),
             Vector3D::new(1.0, 0.0, 0.0),
-            VOP::new(1.0),
+            &air,
         );
         assert!(!square.intersects(&ray));
         assert_eq!(square.intersection(&ray), None);

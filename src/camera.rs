@@ -1,25 +1,25 @@
 use crate::{ray::BounceResult, Point3D, Ray, Surface, Vector3D, VOP};
 use image::{Rgb, RgbImage};
 
-pub struct Camera {
+pub struct Camera<'a> {
     origin: Point3D,
     gaze: Vector3D,
     up: Vector3D,
     fov: (f64, f64),
     density: f64,
-    vop: VOP,
+    vop: &'a VOP,
 }
 
 // TODO: check gaze and up are perpendicular
-impl Camera {
+impl<'a> Camera<'a> {
     pub fn new(
         origin: Point3D,
         gaze: Vector3D,
         up: Vector3D,
         fov: (f64, f64),
         density: f64,
-        vop: VOP,
-    ) -> Self {
+        vop: &'a VOP,
+    ) -> Camera<'a> {
         Self {
             origin,
             gaze,
@@ -85,7 +85,7 @@ impl Camera {
     }
 
     /// Capture the scene before the camera's eyes.
-    pub fn look(&self, scene: &[Box<dyn Surface>]) -> Vec<(u8, u8, u8)> {
+    pub fn look(&self, scene: &[&dyn Surface]) -> Vec<(u8, u8, u8)> {
         let mut result = Vec::new();
 
         for (_i, pxc) in self.pixel_centers().into_iter().enumerate() {
@@ -118,25 +118,27 @@ impl Camera {
 mod tests {
     use super::*;
 
-    fn camera() -> Camera {
+    fn camera(vop: &VOP) -> Camera {
         Camera::new(
             Point3D::new(0.0, 0.0, 0.0),
             Vector3D::new(0.0, 1.0, 0.0),
             Vector3D::new(0.0, 0.0, 1.0),
             (20.0, 30.0),
             1.0,
-            VOP::new(1.0),
+            vop,
         )
     }
 
     #[test]
     fn screen_resolution() {
-        assert_eq!(camera().screen_resolution(), (20, 30))
+        let air = VOP::new(1.0);
+        assert_eq!(camera(&air).screen_resolution(), (20, 30))
     }
 
     #[test]
     fn screen_size() {
-        let calc = camera().screen_size();
+        let air = VOP::new(1.0);
+        let calc = camera(&air).screen_size();
         let theo = (0.35265, 0.53590);
         assert!((calc.0 - theo.0).abs() <= 1e-5);
         assert!((calc.1 - theo.1).abs() <= 1e-5);
