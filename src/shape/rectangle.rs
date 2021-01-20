@@ -2,21 +2,10 @@ use super::{plane_contains_point, plane_intersects_ray, Shape};
 use crate::{ray::Ray, Point3D, Vector3D};
 
 pub struct RectangleShape {
-    origin: Point3D,
-    normal: Vector3D,
-    orientation: Vector3D,
-    size: (f64, f64), // orientation is along 1st size dimension
-}
-
-impl RectangleShape {
-    pub fn new(origin: Point3D, normal: Vector3D, orientation: Vector3D, size: (f64, f64)) -> Self {
-        Self {
-            origin,
-            normal,
-            orientation,
-            size,
-        }
-    }
+    pub origin: Point3D,
+    pub normal: Vector3D,
+    pub orientation: Vector3D,
+    pub size: [f64; 2], // orientation is along 1st size dimension
 }
 
 impl Shape for RectangleShape {
@@ -45,7 +34,7 @@ impl Shape for RectangleShape {
         let from_origin = *point - self.origin;
         let l0 = from_origin.dot(&self.orientation).abs();
         let l1 = from_origin.dot(&self.normal.cross(&self.orientation)).abs();
-        l0 <= self.size.0 / 2.0 && l1 <= self.size.1 / 2.0
+        l0 <= self.size[0] / 2.0 && l1 <= self.size[1] / 2.0
     }
     fn origin(&self) -> Point3D {
         self.origin
@@ -58,12 +47,12 @@ mod tests {
     use crate::VOP;
 
     fn xy_square() -> RectangleShape {
-        RectangleShape::new(
-            Point3D::new(0.0, 0.0, 0.0),
-            Vector3D::new(0.0, 0.0, 1.0),
-            Vector3D::new(0.0, 1.0, 0.0),
-            (2.0, 2.0),
-        )
+        RectangleShape {
+            origin: Point3D::new(0.0, 0.0, 0.0),
+            normal: Vector3D::new(0.0, 0.0, 1.0),
+            orientation: Vector3D::new(0.0, 1.0, 0.0),
+            size: [2.0, 2.0],
+        }
     }
 
     #[test]

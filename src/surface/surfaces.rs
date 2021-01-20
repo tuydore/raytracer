@@ -1,7 +1,13 @@
+use collections::HashMap;
+use serde::Deserialize;
+use std::{collections, error::Error};
+
 use crate::{
     shape::{InfinitePlaneShape, ParaboloidShape, RectangleShape, SphereShape},
     Point3D, Shape, Surface, Vector3D, SOP, VOP,
 };
+
+use super::SurfaceBuilder;
 
 pub struct Rectangle<'a> {
     geometry: RectangleShape,
@@ -122,72 +128,25 @@ impl<'a> Surface<'a> for Sphere<'a> {
     }
 }
 
-pub struct Checkerboard<'a> {
-    geometry: InfinitePlaneShape,
-    color: (u8, u8, u8),
-    orientation: Vector3D,
-    tile_size: f64,
-    vop_above: &'a VOP,
-    vop_below: &'a VOP,
-}
-
-impl<'a> Checkerboard<'a> {
-    pub fn new(
-        origin: Point3D,
-        normal: Vector3D,
-        orientation: Vector3D,
-        color: (u8, u8, u8),
-        tile_size: f64,
-        vop_below: &'a VOP,
-        vop_above: &'a VOP,
-    ) -> Checkerboard<'a> {
-        Self {
-            geometry: InfinitePlaneShape::new(origin, normal),
-            color,
-            orientation,
-            tile_size,
-            vop_above,
-            vop_below,
-        }
-    }
-}
-
-impl<'a> Surface<'a> for Checkerboard<'a> {
-    fn geometry(&self) -> &dyn Shape {
-        &self.geometry
-    }
-    fn vop_above_at(&self, _: &Point3D) -> &'a VOP {
-        &self.vop_above
-    }
-    fn vop_below_at(&self, _: &Point3D) -> &'a VOP {
-        &self.vop_below
-    }
-    fn sop_at(&self, point: &Point3D) -> SOP {
-        let y = self
-            .geometry
-            .normal_at(point)
-            .unwrap()
-            .cross(&self.orientation)
-            .normalized();
-        let x = self.orientation.normalized();
-        let from_origin = *point - self.geometry().origin();
-
-        let size_x = from_origin.dot(&x) / self.tile_size;
-        let size_y = from_origin.dot(&y) / self.tile_size;
-        if (size_x.floor() as i64 + size_y.floor() as i64) % 2 == 0 {
-            let (red, green, blue) = self.color;
-            SOP::Light(red, green, blue)
-        } else {
-            SOP::Dark
-        }
-    }
-}
-
 pub struct ZParaboloid<'a> {
     geometry: ParaboloidShape,
     sop: SOP,
     vop_above: &'a VOP,
     vop_below: &'a VOP,
+}
+
+#[derive(Deserialize)]
+pub struct ZParaboloidBuilder {
+    pub origin: [f64; 3],
+    pub a: f64,
+    pub b: f64,
+    pub sop: SOP,
+    pub vop_above: String,
+    pub vop_below: String,
+}
+
+impl<'a> ZParaboloidBuilder {
+    fn build(&self, vop_map: &'a)
 }
 
 impl<'a> ZParaboloid<'a> {

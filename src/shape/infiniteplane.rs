@@ -4,14 +4,8 @@ use {
 };
 
 pub struct InfinitePlaneShape {
-    origin: Point3D,
-    normal: Vector3D,
-}
-
-impl InfinitePlaneShape {
-    pub fn new(origin: Point3D, normal: Vector3D) -> Self {
-        Self { origin, normal }
-    }
+    pub origin: Point3D,
+    pub normal: Vector3D,
 }
 
 impl Shape for InfinitePlaneShape {

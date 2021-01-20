@@ -5,24 +5,14 @@ use crate::{Point3D, Ray, Shape, Vector3D, SURFACE_INCLUSION};
 use super::pick_closest_intersection;
 // TODO: check asq and bsq are > 0
 pub struct ParaboloidShape {
-    x0: f64,
-    y0: f64,
-    z0: f64,
-    asq: f64,
-    bsq: f64,
+    pub x0: f64,
+    pub y0: f64,
+    pub z0: f64,
+    pub asq: f64,
+    pub bsq: f64,
 }
 
 impl ParaboloidShape {
-    pub fn new(x0: f64, y0: f64, z0: f64, asq: f64, bsq: f64) -> Self {
-        Self {
-            x0,
-            y0,
-            z0,
-            asq,
-            bsq,
-        }
-    }
-
     /// Returns (alpha, delta) where solution is alpha +/- delta.sqrt()
     fn line_intersection_quadratic(&self, origin: &Point3D, direction: &Vector3D) -> (f64, f64) {
         let alpha_x = origin.x - self.x0;
@@ -91,7 +81,13 @@ mod tests {
     use crate::VOP;
 
     fn center_paraboloid() -> ParaboloidShape {
-        ParaboloidShape::new(0.0, 0.0, 0.0, 1.0, 1.0)
+        ParaboloidShape {
+            x0: 0.0,
+            y0: 0.0,
+            z0: 0.0,
+            asq: 1.0,
+            bsq: 1.0,
+        }
     }
 
     #[test]

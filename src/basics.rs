@@ -1,8 +1,10 @@
-use std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign};
+use {
+    crate::{SURFACE_INCLUSION, VECTOR_IDENTITY},
+    serde::Deserialize,
+    std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
+};
 
-use crate::{SURFACE_INCLUSION, VECTOR_IDENTITY};
-
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Deserialize)]
 pub struct Vector3D {
     pub x: f64,
     pub y: f64,

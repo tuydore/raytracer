@@ -2,15 +2,11 @@ use super::{pick_closest_intersection, Shape};
 use crate::{Point3D, Ray, Vector3D, SURFACE_INCLUSION};
 
 pub struct SphereShape {
-    center: Point3D,
-    radius: f64,
+    pub center: Point3D,
+    pub radius: f64,
 }
 
 impl SphereShape {
-    pub fn new(center: Point3D, radius: f64) -> Self {
-        Self { center, radius }
-    }
-
     /// via https://en.wikipedia.org/wiki/Line%E2%80%93sphere_intersection
     /// This assumes the line has equation x = o + d * u and the sphere is centered at c, radius r.
     /// This will take into account the direction of the ray too, so if d<0 there will be no solutions.
@@ -74,7 +70,10 @@ mod tests {
     use crate::VOP;
 
     fn center_unit_sphere() -> SphereShape {
-        SphereShape::new(Point3D::new(0.0, 0.0, 0.0), 1.0)
+        SphereShape {
+            center: Point3D::new(0.0, 0.0, 0.0),
+            radius: 1.0,
+        }
     }
 
     fn downwards_ray(vop: &VOP) -> Ray {

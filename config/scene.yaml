@@ -1,0 +1,58 @@
+filepath: "/home/tuydore/repositories/raytracer/results/glass_spheres_mix.jpg"
+
+camera:
+  origin: [0.0, 0.0, 0.0]
+  gaze: [-1.0, -1.0, -0.5]
+  up: [-0.5, -0.5, 2.0]
+  fov: [18.0, 32.0]
+  density: 200.0
+  vop: air
+
+vops:
+  air:
+    ior: 1.0
+  glass:
+    ior: 1.5
+
+surfaces:
+  - type: checkerboard
+    origin: [0.0, 0.0, 0.0]
+    normal: [0.0, 0.0, 1.0]
+    orientation: [0.0, 1.0, 0.0]
+    color: [255, 255, 255]
+    tile_size: 2.0
+    vop_above: air
+    vop_below: air
+  
+  - type: sphere
+    center: [0.0, 0.0, 0.0]
+    radius: 2.0
+    sop:
+      type: refract
+    vop_above: air
+    vop_below: air
+
+  - type: sphere
+    center: [0.0, 0.0, 2.0]
+    radius: 2.0
+    sop:
+      type: light
+      color: [94, 39, 80]
+    vop_above: air
+    vop_below: glass
+
+  - type: sphere
+    center: [0.0, 6.0, 2.0]
+    radius: 2.0
+    sop:
+      type: reflect
+    vop_above: air
+    vop_below: glass
+
+  - type: sphere
+    center: [6.0, 0.0, 2.0]
+    radius: 2.0
+    sop:
+      type: reflect
+    vop_above: air
+    vop_below: glass
