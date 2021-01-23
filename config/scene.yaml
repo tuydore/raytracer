@@ -26,7 +26,7 @@ surfaces:
     vop_below: air
   
   - type: sphere
-    center: [0.0, 0.0, 0.0]
+    center: [6.0, 6.0, 2.0]
     radius: 2.0
     sop:
       refract: null
