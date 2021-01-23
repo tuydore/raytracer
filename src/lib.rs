@@ -11,8 +11,8 @@ pub use {
     ray::{BounceResult, Ray},
     shape::Shape,
     surface::{
-        surfaces::{Checkerboard, Plane, Rectangle, Sphere, ZParaboloid},
-        Surface, SOP,
+        CheckerboardBuilder, PlaneBuilder, RectangleBuilder, SphereBuilder, Surface,
+        ZParaboloidBuilder, SOP,
     },
     vop::VOP,
 };

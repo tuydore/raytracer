@@ -77,11 +77,11 @@ mod tests {
     }
 
     fn downwards_ray(vop: &VOP) -> Ray {
-        Ray::new(
-            Point3D::new(0.0, 0.0, 10.0),
-            Vector3D::new(0.0, 0.0, -1.0),
+        Ray {
+            origin: Point3D::new(0.0, 0.0, 10.0),
+            direction: Vector3D::new(0.0, 0.0, -1.0),
             vop,
-        )
+        }
     }
 
     #[test]
@@ -120,7 +120,7 @@ mod tests {
 
     #[test]
     fn ray_intersection() {
-        let air = VOP::new(1.0);
+        let air = VOP { ior: 1.0 };
         assert_eq!(
             center_unit_sphere()
                 .intersection(&downwards_ray(&air))

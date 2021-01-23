@@ -1,0 +1,24 @@
+filepath: "/home/tuydore/repositories/raytracer/results/test_yaml.jpg"
+
+camera:
+  origin: [0.0, 0.0, 10.0]
+  gaze: [0.0, 0.0, -1.0]
+  up: [1.0, 0.0, 0.0]
+  fov: [18.0, 32.0]
+  density: 200.0
+  vop: air
+
+volumes:
+  air:
+    ior: 1.0
+
+surfaces:
+  - type: checkerboard
+    origin: [0.0, 0.0, 0.0]
+    normal: [0.0, 0.0, 1.0]
+    orientation: [0.0, 1.0, 0.0]
+    sop:
+      light: [255, 255, 255]
+    tile_size: 2.0
+    vop_above: air
+    vop_below: air

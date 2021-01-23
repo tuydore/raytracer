@@ -9,17 +9,9 @@ pub struct Ray<'a> {
 }
 
 impl<'a> Ray<'a> {
-    pub fn new(origin: Point3D, direction: Vector3D, vop: &'a VOP) -> Ray<'a> {
-        Self {
-            origin,
-            direction,
-            vop,
-        }
-    }
-
     // TODO: avoid repetition by calculating first_intersection twice
     /// Launch a ray through the system and fetch its final return value.
-    pub fn launch(&mut self, surfaces: &[&'a dyn Surface]) -> BounceResult {
+    pub fn launch(&mut self, surfaces: &'a [&dyn Surface]) -> BounceResult {
         loop {
             // get all first intersections with surfaces and distances to them
             let intersections: Vec<Option<(Point3D, f64)>> = surfaces
@@ -149,7 +141,7 @@ impl<'a> Ray<'a> {
         vop_below: &'a VOP,
     ) {
         // ratio of n_above / n_below
-        let nanb = vop_above.index_of_refraction / vop_below.index_of_refraction;
+        let nanb = vop_above.ior / vop_below.ior;
 
         // normal to surface at new contact point
         let normal = normal.normalized();

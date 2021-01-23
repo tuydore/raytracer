@@ -1,12 +1,6 @@
-#[derive(Debug, PartialEq, Clone, Copy)]
-pub struct VOP {
-    pub index_of_refraction: f64,
-}
+use serde::Deserialize;
 
-impl VOP {
-    pub fn new(index_of_refraction: f64) -> Self {
-        Self {
-            index_of_refraction,
-        }
-    }
+#[derive(Debug, PartialEq, Clone, Copy, Deserialize)]
+pub struct VOP {
+    pub ior: f64,
 }

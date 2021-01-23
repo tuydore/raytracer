@@ -1,10 +1,10 @@
-use collections::HashMap;
-use serde::Deserialize;
-use std::collections;
-
-use crate::{shape::InfinitePlaneShape, Point3D, Shape, Surface, Vector3D, SOP, VOP};
-
-use super::SurfaceBuilder;
+use {
+    super::{Surface, SurfaceBuilder},
+    crate::{shape::InfinitePlaneShape, Point3D, Shape, Vector3D, SOP, VOP},
+    collections::HashMap,
+    serde::Deserialize,
+    std::collections,
+};
 
 pub struct Checkerboard<'a> {
     geometry: InfinitePlaneShape,
@@ -19,7 +19,7 @@ pub struct Checkerboard<'a> {
 pub struct CheckerboardBuilder {
     pub origin: [f64; 3],
     pub normal: [f64; 3],
-    pub color: [u8; 3],
+    pub sop: SOP,
     pub orientation: [f64; 3],
     pub tile_size: f64,
     pub vop_below: String,
@@ -58,7 +58,6 @@ impl<'a> Surface<'a> for Checkerboard<'a> {
 
 impl<'a> SurfaceBuilder<'a> for CheckerboardBuilder {
     fn build(self, vop_map: &'a HashMap<String, VOP>) -> Box<dyn Surface + 'a> {
-        let [red, green, blue] = self.color;
         Box::new(Checkerboard {
             geometry: InfinitePlaneShape {
                 origin: Point3D {
@@ -77,7 +76,7 @@ impl<'a> SurfaceBuilder<'a> for CheckerboardBuilder {
                 y: self.orientation[1],
                 z: self.orientation[2],
             },
-            sop: SOP::Light(red, green, blue),
+            sop: self.sop,
             tile_size: self.tile_size,
             vop_above: vop_map
                 .get(&self.vop_above)

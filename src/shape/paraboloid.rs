@@ -107,8 +107,12 @@ mod tests {
     #[test]
     fn ray_intersections() {
         let p = center_paraboloid();
-        let air = VOP::new(1.0);
-        let r = Ray::new(Point3D::new(0.0, -10.0, 2.0), Vector3D::py(), &air);
+        let air = VOP { ior: 1.0 };
+        let r = Ray {
+            origin: Point3D::new(0.0, -10.0, 2.0),
+            direction: Vector3D::py(),
+            vop: &air,
+        };
 
         assert_eq!(
             p.line_intersection(&r.origin, &r.direction),

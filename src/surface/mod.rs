@@ -1,11 +1,19 @@
 pub mod checkerboard;
-pub mod surfaces;
+pub mod plane;
+pub mod rectangle;
+pub mod sphere;
+pub mod zparaboloid;
 use crate::{Point3D, Shape, VOP};
+use serde::Deserialize;
 use std::collections::HashMap;
 
-pub use checkerboard::CheckerboardBuilder;
+pub use {
+    checkerboard::CheckerboardBuilder, plane::PlaneBuilder, rectangle::RectangleBuilder,
+    sphere::SphereBuilder, zparaboloid::ZParaboloidBuilder,
+};
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum SOP {
     Reflect,
     Refract,

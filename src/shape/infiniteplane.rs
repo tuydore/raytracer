@@ -42,24 +42,24 @@ mod tests {
     #[test]
     fn test_intersection() {
         let plane = xy_plane();
-        let air = VOP::new(1.0);
-        let ray = Ray::new(
-            Point3D::new(0.0, 0.0, 1.0),
-            Vector3D::new(0.0, 1.0, -1.0),
-            &air,
-        );
+        let air = VOP { ior: 1.0 };
+        let ray = Ray {
+            origin: Point3D::new(0.0, 0.0, 1.0),
+            direction: Vector3D::new(0.0, 1.0, -1.0),
+            vop: &air,
+        };
         assert!(plane.intersects(&ray));
         assert_eq!(plane.intersection(&ray), Some(Point3D::new(0.0, 1.0, 0.0)));
     }
     #[test]
     fn test_no_intersection() {
         let plane = xy_plane();
-        let air = VOP::new(1.0);
-        let ray = Ray::new(
-            Point3D::new(0.0, 0.0, 1.0),
-            Vector3D::new(1.0, 0.0, 0.0),
-            &air,
-        );
+        let air = VOP { ior: 1.0 };
+        let ray = Ray {
+            origin: Point3D::new(0.0, 0.0, 1.0),
+            direction: Vector3D::new(1.0, 0.0, 0.0),
+            vop: &air,
+        };
         assert!(!plane.intersects(&ray));
         assert_eq!(plane.intersection(&ray), None);
     }
