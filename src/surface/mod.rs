@@ -6,6 +6,7 @@ pub mod zparaboloid;
 use crate::{Point3D, Shape, VOP};
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 pub use {
     checkerboard::CheckerboardBuilder, plane::PlaneBuilder, rectangle::RectangleBuilder,
@@ -31,6 +32,6 @@ pub trait Surface<'a> {
     fn sop_at(&self, point: &Point3D) -> SOP;
 }
 
-pub trait SurfaceBuilder<'a> {
-    fn build(self, vop_map: &'a HashMap<String, VOP>) -> Box<dyn Surface + 'a>;
+pub trait SurfaceBuilder {
+    fn build<'a>(self, vop_map: &'a HashMap<String, VOP>) -> Arc<dyn Surface + 'a>;
 }

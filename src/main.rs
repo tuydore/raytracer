@@ -3,8 +3,7 @@ use raytracer::{
     RectangleBuilder, SphereBuilder, Surface, ZParaboloidBuilder, VOP,
 };
 use serde_yaml::{from_str, from_value, Mapping, Value};
-use std::fs;
-use std::{collections::HashMap, env};
+use std::{collections::HashMap, env, fs, sync::Arc};
 
 /// Load the given configuration file and return its contents as a parsed yaml hash.
 fn load_from_yaml() -> Mapping {
@@ -61,7 +60,7 @@ fn extract_camera<'a>(lhm: &Mapping, vop_map: &'a HashMap<String, VOP>) -> Camer
 fn extract_surfaces<'a>(
     lhm: &Mapping,
     vop_map: &'a HashMap<String, VOP>,
-) -> Vec<Box<dyn Surface<'a> + 'a>> {
+) -> Vec<Arc<dyn Surface<'a> + 'a>> {
     let surfaces = lhm
         .get(&Value::String("surfaces".to_owned()))
         .expect("No surfaces give")

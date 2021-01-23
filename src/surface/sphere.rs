@@ -4,6 +4,7 @@ use {
     collections::HashMap,
     serde::Deserialize,
     std::collections,
+    std::sync::Arc,
 };
 
 pub struct Sphere<'a> {
@@ -37,9 +38,9 @@ impl<'a> Surface<'a> for Sphere<'a> {
     }
 }
 
-impl<'a> SurfaceBuilder<'a> for SphereBuilder {
-    fn build(self, vop_map: &'a HashMap<String, VOP>) -> Box<dyn Surface + 'a> {
-        Box::new(Sphere {
+impl SurfaceBuilder for SphereBuilder {
+    fn build<'a>(self, vop_map: &'a HashMap<String, VOP>) -> Arc<dyn Surface + 'a> {
+        Arc::new(Sphere {
             geometry: SphereShape {
                 center: Point3D {
                     x: self.center[0],

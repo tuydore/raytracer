@@ -4,6 +4,7 @@ use {
     collections::HashMap,
     serde::Deserialize,
     std::collections,
+    std::sync::Arc,
 };
 
 pub struct Plane<'a> {
@@ -22,9 +23,9 @@ pub struct PlaneBuilder {
     pub vop_above: String,
 }
 
-impl<'a> SurfaceBuilder<'a> for PlaneBuilder {
-    fn build(self, vop_map: &'a HashMap<String, VOP>) -> Box<dyn Surface + 'a> {
-        Box::new(Plane {
+impl SurfaceBuilder for PlaneBuilder {
+    fn build<'a>(self, vop_map: &'a HashMap<String, VOP>) -> Arc<dyn Surface + 'a> {
+        Arc::new(Plane {
             geometry: InfinitePlaneShape {
                 origin: Point3D {
                     x: self.origin[0],

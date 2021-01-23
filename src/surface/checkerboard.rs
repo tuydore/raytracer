@@ -4,6 +4,7 @@ use {
     collections::HashMap,
     serde::Deserialize,
     std::collections,
+    std::sync::Arc,
 };
 
 pub struct Checkerboard<'a> {
@@ -56,9 +57,9 @@ impl<'a> Surface<'a> for Checkerboard<'a> {
     }
 }
 
-impl<'a> SurfaceBuilder<'a> for CheckerboardBuilder {
-    fn build(self, vop_map: &'a HashMap<String, VOP>) -> Box<dyn Surface + 'a> {
-        Box::new(Checkerboard {
+impl SurfaceBuilder for CheckerboardBuilder {
+    fn build<'a>(self, vop_map: &'a HashMap<String, VOP>) -> Arc<dyn Surface + 'a> {
+        Arc::new(Checkerboard {
             geometry: InfinitePlaneShape {
                 origin: Point3D {
                     x: self.origin[0],

@@ -4,6 +4,7 @@ use {
     collections::HashMap,
     serde::Deserialize,
     std::collections,
+    std::sync::Arc,
 };
 
 pub struct Rectangle<'a> {
@@ -39,9 +40,9 @@ impl<'a> Surface<'a> for Rectangle<'a> {
     }
 }
 
-impl<'a> SurfaceBuilder<'a> for RectangleBuilder {
-    fn build(self, vop_map: &'a HashMap<String, VOP>) -> Box<dyn Surface + 'a> {
-        Box::new(Rectangle {
+impl SurfaceBuilder for RectangleBuilder {
+    fn build<'a>(self, vop_map: &'a HashMap<String, VOP>) -> Arc<dyn Surface + 'a> {
+        Arc::new(Rectangle {
             geometry: RectangleShape {
                 origin: Point3D {
                     x: self.origin[0],

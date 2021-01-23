@@ -4,6 +4,7 @@ use {
     collections::HashMap,
     serde::Deserialize,
     std::collections,
+    std::sync::Arc,
 };
 
 pub struct ZParaboloid<'a> {
@@ -41,9 +42,9 @@ impl<'a> Surface<'a> for ZParaboloid<'a> {
     }
 }
 
-impl<'a> SurfaceBuilder<'a> for ZParaboloidBuilder {
-    fn build(self, vop_map: &'a HashMap<String, VOP>) -> Box<dyn Surface + 'a> {
-        Box::new(ZParaboloid {
+impl SurfaceBuilder for ZParaboloidBuilder {
+    fn build<'a>(self, vop_map: &'a HashMap<String, VOP>) -> Arc<dyn Surface + 'a> {
+        Arc::new(ZParaboloid {
             geometry: ParaboloidShape {
                 x0: self.origin[0],
                 y0: self.origin[1],
