@@ -3,6 +3,7 @@ use image::{Rgb, RgbImage};
 use indicatif::ProgressBar;
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::time::Instant;
 
 #[derive(Debug)]
 pub struct Camera<'a> {
@@ -115,6 +116,9 @@ impl<'a> Camera<'a> {
         let pbar = ProgressBar::new(num_rays);
         pbar.set_draw_delta(num_rays / 100);
 
+        // start timer
+        let t0 = Instant::now();
+
         for (_i, pxc) in self.pixel_centers().into_iter().enumerate() {
             // println!("{}", i);
             // launch a ray towards each pixel's center
@@ -130,7 +134,16 @@ impl<'a> Camera<'a> {
             });
             pbar.inc(1);
         }
+        let seconds = t0.elapsed().as_millis() as f64 / 1000.0;
         pbar.finish_and_clear();
+
+        // show total time
+        println!(
+            "Raytrace time: {}s, rays/s: {}.",
+            seconds,
+            num_rays / seconds as u64
+        );
+
         result
     }
 
