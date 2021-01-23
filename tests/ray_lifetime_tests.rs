@@ -15,64 +15,67 @@ mod sphere_tests {
 
     use super::*;
 
-    fn light_sphere(vop: &VOP) -> Sphere {
+    fn light_sphere(vop: Arc<VOP>) -> Sphere {
         Sphere {
             geometry: SphereShape {
                 center: Point3D::new(0.0, 0.0, 0.0),
                 radius: 1.0,
             },
             sop: SOP::Light(255, 255, 255),
-            vop_above: vop,
+            vop_above: vop.clone(),
             vop_below: vop,
         }
     }
 
-    fn dark_sphere(vop: &VOP) -> Sphere {
+    fn dark_sphere(vop: Arc<VOP>) -> Sphere {
         Sphere {
             geometry: SphereShape {
                 center: Point3D::new(0.0, 0.0, 0.0),
                 radius: 1.0,
             },
             sop: SOP::Dark,
-            vop_above: vop,
+            vop_above: vop.clone(),
             vop_below: vop,
         }
     }
 
-    fn reflective_sphere(vop: &VOP) -> Sphere {
+    fn reflective_sphere(vop: Arc<VOP>) -> Sphere {
         Sphere {
             geometry: SphereShape {
                 center: Point3D::new(0.0, 0.0, 0.0),
                 radius: 1.0,
             },
             sop: SOP::Reflect,
-            vop_above: vop,
+            vop_above: vop.clone(),
             vop_below: vop,
         }
     }
 
     #[test]
     fn counted_ray() {
-        let air = VOP { ior: 1.0 };
-        let sphere = light_sphere(&air);
-        let mut ray = downwards_ray(&air);
-        assert_eq!(ray.launch(&[&sphere]), BounceResult::Count(255, 255, 255));
+        let air = Arc::new(VOP { ior: 1.0 });
+        let sphere = light_sphere(air.clone());
+        let mut ray = downwards_ray(air);
+        assert_eq!(
+            ray.launch(&[Arc::new(sphere)]),
+            BounceResult::Count(255, 255, 255)
+        );
     }
 
     #[test]
     fn killed_ray_at_dark_plane() {
-        let air = VOP { ior: 1.0 };
-        let mut ray = downwards_ray(&air);
-        let sphere = dark_sphere(&air);
-        assert_eq!(ray.launch(&[&sphere]), BounceResult::Kill);
+        let air = Arc::new(VOP { ior: 1.0 });
+        let mut ray = downwards_ray(air.clone());
+        let sphere = dark_sphere(air);
+        assert_eq!(ray.launch(&[Arc::new(sphere)]), BounceResult::Kill);
     }
 
     #[test]
     fn killed_ray_no_more_intersections() {
-        let air = VOP { ior: 1.0 };
-        let mut ray = downwards_ray(&air);
-        let sphere = reflective_sphere(&air);
-        assert_eq!(ray.launch(&[&sphere]), BounceResult::Kill);
+        let air = Arc::new(VOP { ior: 1.0 });
+        let mut ray = downwards_ray(air.clone());
+        let sphere = reflective_sphere(air);
+        assert_eq!(ray.launch(&[Arc::new(sphere)]), BounceResult::Kill);
     }
 }
 
@@ -82,64 +85,67 @@ mod plane_tests {
 
     use super::*;
 
-    fn light_plane(vop: &VOP) -> Plane {
+    fn light_plane(vop: Arc<VOP>) -> Plane {
         Plane {
             geometry: InfinitePlaneShape {
                 origin: Point3D::new(0.0, 0.0, 0.0),
                 normal: Vector3D::new(0.0, 0.0, 1.0),
             },
             sop: SOP::Light(255, 255, 255),
-            vop_above: vop,
+            vop_above: vop.clone(),
             vop_below: vop,
         }
     }
 
-    fn dark_plane(vop: &VOP) -> Plane {
+    fn dark_plane(vop: Arc<VOP>) -> Plane {
         Plane {
             geometry: InfinitePlaneShape {
                 origin: Point3D::new(0.0, 0.0, 0.0),
                 normal: Vector3D::new(0.0, 0.0, 1.0),
             },
             sop: SOP::Dark,
-            vop_above: vop,
+            vop_above: vop.clone(),
             vop_below: vop,
         }
     }
 
-    fn reflective_plane(vop: &VOP) -> Plane {
+    fn reflective_plane(vop: Arc<VOP>) -> Plane {
         Plane {
             geometry: InfinitePlaneShape {
                 origin: Point3D::new(0.0, 0.0, 0.0),
                 normal: Vector3D::new(0.0, 0.0, 1.0),
             },
             sop: SOP::Reflect,
-            vop_above: vop,
+            vop_above: vop.clone(),
             vop_below: vop,
         }
     }
 
     #[test]
     fn counted_ray() {
-        let air = VOP { ior: 1.0 };
-        let mut ray = downwards_ray(&air);
-        let plane = light_plane(&air);
-        assert_eq!(ray.launch(&[&plane]), BounceResult::Count(255, 255, 255));
+        let air = Arc::new(VOP { ior: 1.0 });
+        let mut ray = downwards_ray(air.clone());
+        let plane = light_plane(air);
+        assert_eq!(
+            ray.launch(&[Arc::new(plane)]),
+            BounceResult::Count(255, 255, 255)
+        );
     }
 
     #[test]
     fn killed_ray_at_dark_plane() {
-        let air = VOP { ior: 1.0 };
-        let mut ray = downwards_ray(&air);
-        let plane = dark_plane(&air);
-        assert_eq!(ray.launch(&[&plane]), BounceResult::Kill);
+        let air = Arc::new(VOP { ior: 1.0 });
+        let mut ray = downwards_ray(air.clone());
+        let plane = dark_plane(air);
+        assert_eq!(ray.launch(&[Arc::new(plane)]), BounceResult::Kill);
     }
 
     #[test]
     fn killed_ray_no_more_intersections() {
-        let air = VOP { ior: 1.0 };
-        let mut ray = downwards_ray(&air);
-        let plane = reflective_plane(&air);
-        assert_eq!(ray.launch(&[&plane]), BounceResult::Kill);
+        let air = Arc::new(VOP { ior: 1.0 });
+        let mut ray = downwards_ray(air.clone());
+        let plane = reflective_plane(air);
+        assert_eq!(ray.launch(&[Arc::new(plane)]), BounceResult::Kill);
     }
 }
 
@@ -149,7 +155,7 @@ mod rectangle_tests {
 
     use super::*;
 
-    fn light_rectangle(vop: &VOP) -> Rectangle {
+    fn light_rectangle(vop: Arc<VOP>) -> Rectangle {
         Rectangle {
             geometry: RectangleShape {
                 origin: Point3D::new(0.0, 0.0, 0.0),
@@ -158,12 +164,12 @@ mod rectangle_tests {
                 size: [2.0, 2.0],
             },
             sop: SOP::Light(255, 255, 255),
-            vop_above: vop,
+            vop_above: vop.clone(),
             vop_below: vop,
         }
     }
 
-    fn dark_rectangle(vop: &VOP) -> Rectangle {
+    fn dark_rectangle(vop: Arc<VOP>) -> Rectangle {
         Rectangle {
             geometry: RectangleShape {
                 origin: Point3D::new(0.0, 0.0, 0.0),
@@ -172,12 +178,12 @@ mod rectangle_tests {
                 size: [2.0, 2.0],
             },
             sop: SOP::Dark,
-            vop_above: vop,
+            vop_above: vop.clone(),
             vop_below: vop,
         }
     }
 
-    fn reflective_rectangle(vop: &VOP) -> Rectangle {
+    fn reflective_rectangle(vop: Arc<VOP>) -> Rectangle {
         Rectangle {
             geometry: RectangleShape {
                 origin: Point3D::new(0.0, 0.0, 0.0),
@@ -186,35 +192,35 @@ mod rectangle_tests {
                 size: [2.0, 2.0],
             },
             sop: SOP::Reflect,
-            vop_above: vop,
+            vop_above: vop.clone(),
             vop_below: vop,
         }
     }
 
     #[test]
     fn counted_ray() {
-        let air = VOP { ior: 1.0 };
-        let mut ray = downwards_ray(&air);
-        let rectangle = light_rectangle(&air);
+        let air = Arc::new(VOP { ior: 1.0 });
+        let mut ray = downwards_ray(air.clone());
+        let rectangle = light_rectangle(air);
         assert_eq!(
-            ray.launch(&[&rectangle]),
+            ray.launch(&[Arc::new(rectangle)]),
             BounceResult::Count(255, 255, 255)
         );
     }
 
     #[test]
     fn killed_ray_at_dark_rectangle() {
-        let air = VOP { ior: 1.0 };
-        let mut ray = downwards_ray(&air);
-        let rectangle = dark_rectangle(&air);
-        assert_eq!(ray.launch(&[&rectangle]), BounceResult::Kill);
+        let air = Arc::new(VOP { ior: 1.0 });
+        let mut ray = downwards_ray(air.clone());
+        let rectangle = dark_rectangle(air);
+        assert_eq!(ray.launch(&[Arc::new(rectangle)]), BounceResult::Kill);
     }
 
     #[test]
     fn killed_ray_no_more_intersections() {
-        let air = VOP { ior: 1.0 };
-        let mut ray = downwards_ray(&air);
-        let rectangle = reflective_rectangle(&air);
-        assert_eq!(ray.launch(&[&rectangle]), BounceResult::Kill);
+        let air = Arc::new(VOP { ior: 1.0 });
+        let mut ray = downwards_ray(air.clone());
+        let rectangle = reflective_rectangle(air);
+        assert_eq!(ray.launch(&[Arc::new(rectangle)]), BounceResult::Kill);
     }
 }

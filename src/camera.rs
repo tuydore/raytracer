@@ -115,6 +115,8 @@ impl Camera {
     pub fn look(&self, scene: &[Arc<dyn Surface + Send + Sync>]) -> Vec<(u8, u8, u8)> {
         // instantiate progress bar
         let num_rays: u64 = self.pixel_centers().len() as u64;
+
+        // TODO: why is this so slow?
         // let pbar = ProgressBar::new(num_rays);
         // pbar.set_draw_delta(num_rays / 100);
         // pbar.enable_steady_tick(1000);
