@@ -1,17 +1,18 @@
 use crate::{Point3D, Surface, Vector3D, SOP, VOP};
 use std::error::Error;
+use std::sync::Arc;
 
 #[derive(Debug, Clone)]
-pub struct Ray<'a> {
+pub struct Ray {
     pub origin: Point3D,
     pub direction: Vector3D,
-    pub vop: &'a VOP,
+    pub vop: Arc<VOP>,
 }
 
-impl<'a> Ray<'a> {
+impl Ray {
     // TODO: avoid repetition by calculating first_intersection twice
     /// Launch a ray through the system and fetch its final return value.
-    pub fn launch(&mut self, surfaces: &'a [&dyn Surface]) -> BounceResult {
+    pub fn launch(&mut self, surfaces: &[Arc<dyn Surface>]) -> BounceResult {
         loop {
             // get all first intersections with surfaces and distances to them
             let intersections: Vec<Option<(Point3D, f64)>> = surfaces
@@ -42,7 +43,8 @@ impl<'a> Ray<'a> {
             }
 
             // bounce ray off closest shape
-            match self.bounce_unchecked(surfaces[index], &intersections[index].unwrap().0) {
+            match self.bounce_unchecked(surfaces[index].as_ref(), &intersections[index].unwrap().0)
+            {
                 BounceResult::Continue => continue,
                 BounceResult::Error => panic!("Something went wrong!"),
                 br => return br,
@@ -55,9 +57,9 @@ impl<'a> Ray<'a> {
     /// Otherwise return an error.
     fn get_interaction_parameters_unchecked(
         &self,
-        surface: &'a dyn Surface,
+        surface: &dyn Surface,
         point: &Point3D,
-    ) -> Result<(Vector3D, &'a VOP, &'a VOP), Box<dyn Error>> {
+    ) -> Result<(Vector3D, Arc<VOP>, Arc<VOP>), Box<dyn Error>> {
         // get VOPs above and below
         let vop_above = surface.vop_above_at(&point);
         let vop_below = surface.vop_below_at(&point);
@@ -98,7 +100,7 @@ impl<'a> Ray<'a> {
         }
     }
 
-    pub fn bounce_unchecked(&mut self, surface: &'a dyn Surface, point: &Point3D) -> BounceResult {
+    pub fn bounce_unchecked(&mut self, surface: &dyn Surface, point: &Point3D) -> BounceResult {
         let sop = surface.sop_at(point);
         match sop {
             SOP::Reflect => {
@@ -114,7 +116,7 @@ impl<'a> Ray<'a> {
                 if let Ok((normal, vop_above, vop_below)) =
                     self.get_interaction_parameters_unchecked(surface, point)
                 {
-                    self.refract(point, &normal, &vop_above, &vop_below);
+                    self.refract(point, &normal, vop_above, vop_below);
                     return BounceResult::Continue;
                 }
                 BounceResult::Error
@@ -137,8 +139,8 @@ impl<'a> Ray<'a> {
         &mut self,
         intersection: &Point3D,
         normal: &Vector3D,
-        vop_above: &'a VOP,
-        vop_below: &'a VOP,
+        vop_above: Arc<VOP>,
+        vop_below: Arc<VOP>,
     ) {
         // ratio of n_above / n_below
         let nanb = vop_above.ior / vop_below.ior;

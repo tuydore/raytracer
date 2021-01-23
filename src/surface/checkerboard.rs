@@ -7,13 +7,13 @@ use {
     std::sync::Arc,
 };
 
-pub struct Checkerboard<'a> {
+pub struct Checkerboard {
     geometry: InfinitePlaneShape,
     sop: SOP,
     orientation: Vector3D,
     tile_size: f64,
-    vop_above: &'a VOP,
-    vop_below: &'a VOP,
+    vop_above: Arc<VOP>,
+    vop_below: Arc<VOP>,
 }
 
 #[derive(Deserialize)]
@@ -27,15 +27,15 @@ pub struct CheckerboardBuilder {
     pub vop_above: String,
 }
 
-impl<'a> Surface<'a> for Checkerboard<'a> {
+impl Surface for Checkerboard {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _: &Point3D) -> &'a VOP {
-        &self.vop_above
+    fn vop_above_at(&self, _: &Point3D) -> Arc<VOP> {
+        self.vop_above.clone()
     }
-    fn vop_below_at(&self, _: &Point3D) -> &'a VOP {
-        &self.vop_below
+    fn vop_below_at(&self, _: &Point3D) -> Arc<VOP> {
+        self.vop_below.clone()
     }
     fn sop_at(&self, point: &Point3D) -> SOP {
         let y = self
@@ -58,7 +58,7 @@ impl<'a> Surface<'a> for Checkerboard<'a> {
 }
 
 impl SurfaceBuilder for CheckerboardBuilder {
-    fn build<'a>(self, vop_map: &'a HashMap<String, VOP>) -> Arc<dyn Surface + 'a> {
+    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface> {
         Arc::new(Checkerboard {
             geometry: InfinitePlaneShape {
                 origin: Point3D {
@@ -81,10 +81,12 @@ impl SurfaceBuilder for CheckerboardBuilder {
             tile_size: self.tile_size,
             vop_above: vop_map
                 .get(&self.vop_above)
-                .expect("No VOP above mapping found."),
+                .expect("No VOP above mapping found.")
+                .clone(),
             vop_below: vop_map
                 .get(&self.vop_below)
-                .expect("No VOP above mapping found."),
+                .expect("No VOP above mapping found.")
+                .clone(),
         })
     }
 }

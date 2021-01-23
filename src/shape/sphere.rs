@@ -68,6 +68,7 @@ impl Shape for SphereShape {
 mod tests {
     use super::*;
     use crate::VOP;
+    use std::sync::Arc;
 
     fn center_unit_sphere() -> SphereShape {
         SphereShape {
@@ -76,7 +77,7 @@ mod tests {
         }
     }
 
-    fn downwards_ray(vop: &VOP) -> Ray {
+    fn downwards_ray(vop: Arc<VOP>) -> Ray {
         Ray {
             origin: Point3D::new(0.0, 0.0, 10.0),
             direction: Vector3D::new(0.0, 0.0, -1.0),
@@ -120,10 +121,10 @@ mod tests {
 
     #[test]
     fn ray_intersection() {
-        let air = VOP { ior: 1.0 };
+        let air = Arc::new(VOP { ior: 1.0 });
         assert_eq!(
             center_unit_sphere()
-                .intersection(&downwards_ray(&air))
+                .intersection(&downwards_ray(air))
                 .unwrap(),
             Point3D::new(0.0, 0.0, 1.0)
         );

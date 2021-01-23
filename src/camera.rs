@@ -3,16 +3,17 @@ use image::{Rgb, RgbImage};
 use indicatif::ProgressBar;
 use serde::Deserialize;
 use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Instant;
 
 #[derive(Debug)]
-pub struct Camera<'a> {
+pub struct Camera {
     origin: Point3D,
     gaze: Vector3D,
     up: Vector3D,
     fov: [f64; 2],
     density: f64,
-    vop: &'a VOP,
+    vop: Arc<VOP>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -26,7 +27,7 @@ pub struct CameraBuilder {
 }
 
 impl CameraBuilder {
-    pub fn build(self, vop_map: &HashMap<String, VOP>) -> Camera {
+    pub fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Camera {
         Camera {
             origin: Point3D {
                 x: self.origin[0],
@@ -45,13 +46,16 @@ impl CameraBuilder {
             },
             fov: self.fov,
             density: self.density,
-            vop: vop_map.get(&self.vop).expect("No VOP above mapping found."),
+            vop: vop_map
+                .get(&self.vop)
+                .expect("No VOP above mapping found.")
+                .clone(),
         }
     }
 }
 
 // TODO: check gaze and up are perpendicular
-impl<'a> Camera<'a> {
+impl Camera {
     /// Assume a screen filling the entire FOV will be placed at a distance of 1 in front of the camera.
     /// With the density parameter, we will approximate the number of bins in each dimension.
     pub fn screen_resolution(&self) -> (usize, usize) {
@@ -107,7 +111,7 @@ impl<'a> Camera<'a> {
     }
 
     /// Capture the scene before the camera's eyes.
-    pub fn look(&self, scene: &[&dyn Surface]) -> Vec<(u8, u8, u8)> {
+    pub fn look(&self, scene: &[Arc<dyn Surface>]) -> Vec<(u8, u8, u8)> {
         let mut result = Vec::new();
 
         // instantiate progress bar
@@ -125,7 +129,7 @@ impl<'a> Camera<'a> {
             let mut ray = Ray {
                 origin: self.origin,
                 direction: pxc - self.origin,
-                vop: self.vop,
+                vop: self.vop.clone(),
             };
             result.push(match ray.launch(scene) {
                 BounceResult::Count(r, g, b) => (r, g, b),
@@ -165,7 +169,7 @@ impl<'a> Camera<'a> {
 mod tests {
     use super::*;
 
-    fn camera(vop: &VOP) -> Camera {
+    fn camera(vop: Arc<VOP>) -> Camera {
         Camera {
             origin: Point3D::new(0.0, 0.0, 0.0),
             gaze: Vector3D::new(0.0, 1.0, 0.0),
@@ -178,14 +182,14 @@ mod tests {
 
     #[test]
     fn screen_resolution() {
-        let air = VOP { ior: 1.0 };
-        assert_eq!(camera(&air).screen_resolution(), (20, 30))
+        let air = Arc::new(VOP { ior: 1.0 });
+        assert_eq!(camera(air).screen_resolution(), (20, 30))
     }
 
     #[test]
     fn screen_size() {
-        let air = VOP { ior: 1.0 };
-        let calc = camera(&air).screen_size();
+        let air = Arc::new(VOP { ior: 1.0 });
+        let calc = camera(air).screen_size();
         let theo = (0.35265, 0.53590);
         assert!((calc.0 - theo.0).abs() <= 1e-5);
         assert!((calc.1 - theo.1).abs() <= 1e-5);

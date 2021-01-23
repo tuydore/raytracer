@@ -2,6 +2,7 @@ use raytracer::{
     surface::plane::Plane, surface::sphere::Sphere, Point3D, Ray, Vector3D, SOP, VECTOR_IDENTITY,
     VOP,
 };
+use std::sync::Arc;
 
 #[cfg(test)]
 mod refraction_tests {
@@ -9,7 +10,7 @@ mod refraction_tests {
 
     use super::*;
 
-    fn refractive_plane<'a>(air: &'a VOP, glass: &'a VOP) -> Plane<'a> {
+    fn refractive_plane(air: Arc<VOP>, glass: Arc<VOP>) -> Plane {
         Plane {
             geometry: InfinitePlaneShape {
                 origin: Point3D::new(0.0, 0.0, 0.0),
@@ -23,13 +24,13 @@ mod refraction_tests {
 
     #[test]
     fn test_refraction_orthogonal() {
-        let air = VOP { ior: 1.0 };
-        let glass = VOP { ior: 1.5 };
-        let plane = refractive_plane(&air, &glass);
+        let air = Arc::new(VOP { ior: 1.0 });
+        let glass = Arc::new(VOP { ior: 1.5 });
+        let plane = refractive_plane(air.clone(), glass);
         let mut downward_ray = Ray {
             origin: Point3D::new(0.0, 0.0, 1.0),
             direction: Vector3D::new(0.0, 0.0, -1.0),
-            vop: &air,
+            vop: air,
         };
         downward_ray.bounce_unchecked(&plane, &Point3D::new(0.0, 0.0, 0.0));
         assert_eq!(downward_ray.direction.normalized(), Vector3D::mz());
@@ -38,13 +39,13 @@ mod refraction_tests {
 
     #[test]
     fn test_snells_law_from_above() {
-        let air = VOP { ior: 1.0 };
-        let glass = VOP { ior: 1.5 };
-        let plane = refractive_plane(&air, &glass);
+        let air = Arc::new(VOP { ior: 1.0 });
+        let glass = Arc::new(VOP { ior: 1.5 });
+        let plane = refractive_plane(air.clone(), glass);
         let original_ray = Ray {
             origin: Point3D::new(1.0, 0.0, 1.0),
             direction: Vector3D::new(-1.0, 0.0, -1.0),
-            vop: &air,
+            vop: air,
         };
         let mut ray = original_ray.clone();
         let intersection = plane.geometry().intersection(&original_ray).unwrap();
@@ -69,13 +70,13 @@ mod refraction_tests {
 
     #[test]
     fn test_snells_law_from_below() {
-        let air = VOP { ior: 1.0 };
-        let glass = VOP { ior: 1.5 };
-        let plane = refractive_plane(&air, &glass);
+        let air = Arc::new(VOP { ior: 1.0 });
+        let glass = Arc::new(VOP { ior: 1.5 });
+        let plane = refractive_plane(air, glass.clone());
         let original_ray = Ray {
             origin: Point3D::new(0.2, 0.0, 1.0),
             direction: Vector3D::new(-0.2, 0.0, -1.0),
-            vop: &glass,
+            vop: glass,
         };
         let intersection = plane.geometry().intersection(&original_ray).unwrap();
         let mut ray = original_ray.clone();
@@ -103,19 +104,19 @@ mod reflection_tests {
 
     use super::*;
 
-    fn reflective_sphere_air(air: &VOP) -> Sphere {
+    fn reflective_sphere_air(air: Arc<VOP>) -> Sphere {
         Sphere {
             geometry: SphereShape {
                 center: Point3D::new(0.0, 0.0, 0.0),
                 radius: 1.0,
             },
             sop: SOP::Reflect,
-            vop_above: air,
+            vop_above: air.clone(),
             vop_below: air,
         }
     }
 
-    fn reflective_sphere_glass<'a>(air: &'a VOP, glass: &'a VOP) -> Sphere<'a> {
+    fn reflective_sphere_glass(air: Arc<VOP>, glass: Arc<VOP>) -> Sphere {
         Sphere {
             geometry: SphereShape {
                 center: Point3D::new(0.0, 0.0, 0.0),
@@ -128,26 +129,26 @@ mod reflection_tests {
     }
 
     #[allow(dead_code)]
-    fn reflective_plane(air: &VOP) -> Plane {
+    fn reflective_plane(air: Arc<VOP>) -> Plane {
         Plane {
             geometry: InfinitePlaneShape {
                 origin: Point3D::new(0.0, 0.0, 0.0),
                 normal: Vector3D::new(0.0, 0.0, 1.0),
             },
             sop: SOP::Reflect,
-            vop_above: air,
+            vop_above: air.clone(),
             vop_below: air,
         }
     }
 
     #[test]
     fn test_sphere_reflection_air() {
-        let air = VOP { ior: 1.0 };
-        let sphere = reflective_sphere_air(&air);
+        let air = Arc::new(VOP { ior: 1.0 });
+        let sphere = reflective_sphere_air(air.clone());
         let mut ray = Ray {
             origin: Point3D::new(1.0, 0.0, 2.0),
             direction: Vector3D::new(-1.0, 0.0, -1.0),
-            vop: &air,
+            vop: air,
         };
         ray.bounce_unchecked(&sphere, &Point3D::new(0.0, 0.0, 1.0));
         assert_eq!(ray.origin, Point3D::new(0.0, 0.0, 1.0));
@@ -160,13 +161,13 @@ mod reflection_tests {
 
     #[test]
     fn test_sphere_reflection_glass() {
-        let air = VOP { ior: 1.0 };
-        let glass = VOP { ior: 1.5 };
-        let sphere = reflective_sphere_glass(&air, &glass);
+        let air = Arc::new(VOP { ior: 1.0 });
+        let glass = Arc::new(VOP { ior: 1.5 });
+        let sphere = reflective_sphere_glass(air.clone(), glass);
         let mut ray = Ray {
             origin: Point3D::new(1.0, 0.0, 2.0),
             direction: Vector3D::new(-1.0, 0.0, -1.0),
-            vop: &air,
+            vop: air,
         };
         ray.bounce_unchecked(&sphere, &Point3D::new(0.0, 0.0, 1.0));
         assert_eq!(ray.origin, Point3D::new(0.0, 0.0, 1.0));

@@ -7,11 +7,11 @@ use {
     std::sync::Arc,
 };
 
-pub struct Rectangle<'a> {
+pub struct Rectangle {
     pub geometry: RectangleShape,
     pub sop: SOP,
-    pub vop_above: &'a VOP,
-    pub vop_below: &'a VOP,
+    pub vop_above: Arc<VOP>,
+    pub vop_below: Arc<VOP>,
 }
 
 #[derive(Deserialize)]
@@ -25,15 +25,15 @@ pub struct RectangleBuilder {
     pub vop_above: String,
 }
 
-impl<'a> Surface<'a> for Rectangle<'a> {
+impl Surface for Rectangle {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _point: &Point3D) -> &'a VOP {
-        &self.vop_above
+    fn vop_above_at(&self, _point: &Point3D) -> Arc<VOP> {
+        self.vop_above.clone()
     }
-    fn vop_below_at(&self, _point: &Point3D) -> &'a VOP {
-        &self.vop_below
+    fn vop_below_at(&self, _point: &Point3D) -> Arc<VOP> {
+        self.vop_below.clone()
     }
     fn sop_at(&self, _point: &Point3D) -> SOP {
         self.sop
@@ -41,7 +41,7 @@ impl<'a> Surface<'a> for Rectangle<'a> {
 }
 
 impl SurfaceBuilder for RectangleBuilder {
-    fn build<'a>(self, vop_map: &'a HashMap<String, VOP>) -> Arc<dyn Surface + 'a> {
+    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface> {
         Arc::new(Rectangle {
             geometry: RectangleShape {
                 origin: Point3D {
@@ -64,10 +64,12 @@ impl SurfaceBuilder for RectangleBuilder {
             sop: self.sop,
             vop_above: vop_map
                 .get(&self.vop_above)
-                .expect("No VOP above mapping found."),
+                .expect("No VOP above mapping found.")
+                .clone(),
             vop_below: vop_map
                 .get(&self.vop_below)
-                .expect("No VOP above mapping found."),
+                .expect("No VOP above mapping found.")
+                .clone(),
         })
     }
 }

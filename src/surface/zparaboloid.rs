@@ -7,11 +7,11 @@ use {
     std::sync::Arc,
 };
 
-pub struct ZParaboloid<'a> {
+pub struct ZParaboloid {
     geometry: ParaboloidShape,
     sop: SOP,
-    vop_above: &'a VOP,
-    vop_below: &'a VOP,
+    vop_above: Arc<VOP>,
+    vop_below: Arc<VOP>,
 }
 
 #[derive(Deserialize)]
@@ -24,17 +24,17 @@ pub struct ZParaboloidBuilder {
     pub vop_below: String,
 }
 
-impl<'a> Surface<'a> for ZParaboloid<'a> {
+impl Surface for ZParaboloid {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
 
-    fn vop_above_at(&self, _: &Point3D) -> &'a VOP {
-        &self.vop_above
+    fn vop_above_at(&self, _: &Point3D) -> Arc<VOP> {
+        self.vop_above.clone()
     }
 
-    fn vop_below_at(&self, _: &Point3D) -> &'a VOP {
-        &self.vop_below
+    fn vop_below_at(&self, _: &Point3D) -> Arc<VOP> {
+        self.vop_below.clone()
     }
 
     fn sop_at(&self, _: &Point3D) -> SOP {
@@ -43,7 +43,7 @@ impl<'a> Surface<'a> for ZParaboloid<'a> {
 }
 
 impl SurfaceBuilder for ZParaboloidBuilder {
-    fn build<'a>(self, vop_map: &'a HashMap<String, VOP>) -> Arc<dyn Surface + 'a> {
+    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface> {
         Arc::new(ZParaboloid {
             geometry: ParaboloidShape {
                 x0: self.origin[0],
@@ -55,10 +55,12 @@ impl SurfaceBuilder for ZParaboloidBuilder {
             sop: self.sop,
             vop_above: vop_map
                 .get(&self.vop_above)
-                .expect("No VOP above mapping found."),
+                .expect("No VOP above mapping found.")
+                .clone(),
             vop_below: vop_map
                 .get(&self.vop_below)
-                .expect("No VOP above mapping found."),
+                .expect("No VOP above mapping found.")
+                .clone(),
         })
     }
 }

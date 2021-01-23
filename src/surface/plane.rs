@@ -7,11 +7,11 @@ use {
     std::sync::Arc,
 };
 
-pub struct Plane<'a> {
+pub struct Plane {
     pub geometry: InfinitePlaneShape,
     pub sop: SOP,
-    pub vop_above: &'a VOP,
-    pub vop_below: &'a VOP,
+    pub vop_above: Arc<VOP>,
+    pub vop_below: Arc<VOP>,
 }
 
 #[derive(Deserialize)]
@@ -24,7 +24,7 @@ pub struct PlaneBuilder {
 }
 
 impl SurfaceBuilder for PlaneBuilder {
-    fn build<'a>(self, vop_map: &'a HashMap<String, VOP>) -> Arc<dyn Surface + 'a> {
+    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface> {
         Arc::new(Plane {
             geometry: InfinitePlaneShape {
                 origin: Point3D {
@@ -41,23 +41,25 @@ impl SurfaceBuilder for PlaneBuilder {
             sop: self.sop,
             vop_above: vop_map
                 .get(&self.vop_above)
-                .expect("No VOP above mapping found."),
+                .expect("No VOP above mapping found.")
+                .clone(),
             vop_below: vop_map
                 .get(&self.vop_below)
-                .expect("No VOP above mapping found."),
+                .expect("No VOP above mapping found.")
+                .clone(),
         })
     }
 }
 
-impl<'a> Surface<'a> for Plane<'a> {
+impl Surface for Plane {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _: &Point3D) -> &'a VOP {
-        &self.vop_above
+    fn vop_above_at(&self, _: &Point3D) -> Arc<VOP> {
+        self.vop_above.clone()
     }
-    fn vop_below_at(&self, _: &Point3D) -> &'a VOP {
-        &self.vop_below
+    fn vop_below_at(&self, _: &Point3D) -> Arc<VOP> {
+        self.vop_below.clone()
     }
     fn sop_at(&self, _: &Point3D) -> SOP {
         self.sop

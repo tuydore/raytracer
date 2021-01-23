@@ -25,7 +25,7 @@ fn extract_filepath(lhm: &Mapping) -> String {
 }
 
 /// Extract VOPs.
-fn extract_vops(lhm: &Mapping) -> HashMap<String, VOP> {
+fn extract_vops(lhm: &Mapping) -> HashMap<String, Arc<VOP>> {
     let volumes = lhm
         .get(&Value::String("volumes".to_owned()))
         .expect("No volumes given.")
@@ -39,14 +39,14 @@ fn extract_vops(lhm: &Mapping) -> HashMap<String, VOP> {
                 k.as_str()
                     .expect("Volume names must be strings.")
                     .to_owned(),
-                from_value(v.clone()).expect("Could not parse volume"),
+                Arc::new(from_value(v.clone()).expect("Could not parse volume")),
             )
         })
         .collect()
 }
 
 /// Get the camera configuration.
-fn extract_camera<'a>(lhm: &Mapping, vop_map: &'a HashMap<String, VOP>) -> Camera<'a> {
+fn extract_camera(lhm: &Mapping, vop_map: &HashMap<String, Arc<VOP>>) -> Camera {
     let camera_builder: CameraBuilder = from_value(
         lhm.get(&Value::String("camera".to_owned()))
             .expect("No camera given.")
@@ -57,10 +57,7 @@ fn extract_camera<'a>(lhm: &Mapping, vop_map: &'a HashMap<String, VOP>) -> Camer
 }
 
 // TODO: store these on stack somehow?
-fn extract_surfaces<'a>(
-    lhm: &Mapping,
-    vop_map: &'a HashMap<String, VOP>,
-) -> Vec<Arc<dyn Surface<'a> + 'a>> {
+fn extract_surfaces(lhm: &Mapping, vop_map: &HashMap<String, Arc<VOP>>) -> Vec<Arc<dyn Surface>> {
     let surfaces = lhm
         .get(&Value::String("surfaces".to_owned()))
         .expect("No surfaces give")
@@ -115,10 +112,7 @@ fn main() {
         surfaces.len()
     );
 
-    // QUESTION: is there a better way of doing this? Is this optimal?
-    let surface_references: Vec<&dyn Surface> = surfaces.iter().map(|x| x.as_ref()).collect();
-
-    let result = camera.look(&surface_references);
+    let result = camera.look(&surfaces);
     camera.save_jpg(&filepath, result);
 
     // println!("{:#?}", surfaces);

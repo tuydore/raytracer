@@ -1,6 +1,7 @@
 use raytracer::{ray::BounceResult, Point3D, Ray, Vector3D, SOP, VOP};
+use std::sync::Arc;
 
-fn downwards_ray(vop: &VOP) -> Ray {
+fn downwards_ray(vop: Arc<VOP>) -> Ray {
     Ray {
         origin: Point3D::new(0.0, 0.0, 10.0),
         direction: Vector3D::new(0.0, 0.0, -1.0),

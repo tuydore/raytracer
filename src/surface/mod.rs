@@ -22,16 +22,16 @@ pub enum SOP {
     Dark,
 }
 
-pub trait Surface<'a> {
+pub trait Surface {
     fn geometry(&self) -> &dyn Shape;
 
-    fn vop_above_at(&self, point: &Point3D) -> &'a VOP;
+    fn vop_above_at(&self, point: &Point3D) -> Arc<VOP>;
 
-    fn vop_below_at(&self, point: &Point3D) -> &'a VOP;
+    fn vop_below_at(&self, point: &Point3D) -> Arc<VOP>;
 
     fn sop_at(&self, point: &Point3D) -> SOP;
 }
 
 pub trait SurfaceBuilder {
-    fn build<'a>(self, vop_map: &'a HashMap<String, VOP>) -> Arc<dyn Surface + 'a>;
+    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface>;
 }
