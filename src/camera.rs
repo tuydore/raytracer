@@ -115,34 +115,45 @@ impl Camera {
     pub fn look(&self, scene: &[Arc<dyn Surface + Send + Sync>]) -> Vec<(u8, u8, u8)> {
         // instantiate progress bar
         let num_rays: u64 = self.pixel_centers().len() as u64;
-        println!("Launching {} rays...", num_rays);
-        let pbar = ProgressBar::new(num_rays);
-        pbar.set_draw_delta(num_rays / 100);
+        // let pbar = ProgressBar::new(num_rays);
+        // pbar.set_draw_delta(num_rays / 100);
+        // pbar.enable_steady_tick(1000);
+
+        // create all rays
+        println!("Pre-generating {} rays...", num_rays);
+        let rays: Vec<Ray> = self
+            .pixel_centers()
+            .into_iter()
+            .map(|pxc| Ray {
+                origin: self.origin,
+                direction: pxc - self.origin,
+                vop: self.vop.clone(),
+            })
+            .collect();
 
         // start timer
+        println!("Starting raytrace...");
         let t0 = Instant::now();
 
-        let result = self
-            .pixel_centers()
+        let mut result: Vec<(usize, u8, u8, u8)> = rays
             .into_par_iter()
-            .map(|pxc| {
-                let mut ray = Ray {
-                    origin: self.origin,
-                    direction: pxc - self.origin,
-                    vop: self.vop.clone(),
-                };
-                let result = match ray.launch(scene) {
-                    BounceResult::Count(r, g, b) => (r, g, b),
-                    BounceResult::Kill => (0, 0, 0),
+            .enumerate()
+            .map(|(i, mut r)| {
+                // pbar.inc(1);
+                match r.launch(scene) {
+                    BounceResult::Count(r, g, b) => (i, r, g, b),
+                    BounceResult::Kill => (i, 0, 0, 0),
                     _ => panic!("Something has gone wrong."),
-                };
-                pbar.inc(1);
-                result
+                }
             })
             .collect();
 
         let seconds = t0.elapsed().as_millis() as f64 / 1000.0;
-        pbar.finish_and_clear();
+        // pbar.finish_and_clear();
+
+        // sort result by index
+        result.sort_by_key(|(i, _, _, _)| *i);
+        let result = result.into_iter().map(|(_, r, g, b)| (r, g, b)).collect();
 
         // show total time
         println!(
