@@ -43,7 +43,7 @@ impl Surface for ZParaboloid {
 }
 
 impl SurfaceBuilder for ZParaboloidBuilder {
-    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface> {
+    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(ZParaboloid {
             geometry: ParaboloidShape {
                 x0: self.origin[0],

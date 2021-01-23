@@ -58,7 +58,7 @@ impl Surface for Checkerboard {
 }
 
 impl SurfaceBuilder for CheckerboardBuilder {
-    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface> {
+    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(Checkerboard {
             geometry: InfinitePlaneShape {
                 origin: Point3D {

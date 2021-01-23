@@ -12,7 +12,7 @@ pub struct Ray {
 impl Ray {
     // TODO: avoid repetition by calculating first_intersection twice
     /// Launch a ray through the system and fetch its final return value.
-    pub fn launch(&mut self, surfaces: &[Arc<dyn Surface>]) -> BounceResult {
+    pub fn launch(&mut self, surfaces: &[Arc<dyn Surface + Send + Sync>]) -> BounceResult {
         loop {
             // get all first intersections with surfaces and distances to them
             let intersections: Vec<Option<(Point3D, f64)>> = surfaces

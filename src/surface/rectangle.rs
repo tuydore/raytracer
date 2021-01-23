@@ -41,7 +41,7 @@ impl Surface for Rectangle {
 }
 
 impl SurfaceBuilder for RectangleBuilder {
-    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface> {
+    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(Rectangle {
             geometry: RectangleShape {
                 origin: Point3D {

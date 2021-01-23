@@ -39,7 +39,7 @@ impl Surface for Sphere {
 }
 
 impl SurfaceBuilder for SphereBuilder {
-    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface> {
+    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(Sphere {
             geometry: SphereShape {
                 center: Point3D {

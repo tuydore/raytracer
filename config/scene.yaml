@@ -1,4 +1,5 @@
 filepath: "/home/tuydore/repositories/raytracer/results/test_yaml.jpg"
+threads: 2
 
 camera:
   origin: [30.0, 30.0, 15.0]

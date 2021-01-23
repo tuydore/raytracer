@@ -1,6 +1,7 @@
 use crate::{ray::BounceResult, Point3D, Ray, Surface, Vector3D, VOP};
 use image::{Rgb, RgbImage};
 use indicatif::ProgressBar;
+use rayon::prelude::*;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -111,9 +112,7 @@ impl Camera {
     }
 
     /// Capture the scene before the camera's eyes.
-    pub fn look(&self, scene: &[Arc<dyn Surface>]) -> Vec<(u8, u8, u8)> {
-        let mut result = Vec::new();
-
+    pub fn look(&self, scene: &[Arc<dyn Surface + Send + Sync>]) -> Vec<(u8, u8, u8)> {
         // instantiate progress bar
         let num_rays: u64 = self.pixel_centers().len() as u64;
         println!("Launching {} rays...", num_rays);
@@ -123,21 +122,25 @@ impl Camera {
         // start timer
         let t0 = Instant::now();
 
-        for (_i, pxc) in self.pixel_centers().into_iter().enumerate() {
-            // println!("{}", i);
-            // launch a ray towards each pixel's center
-            let mut ray = Ray {
-                origin: self.origin,
-                direction: pxc - self.origin,
-                vop: self.vop.clone(),
-            };
-            result.push(match ray.launch(scene) {
-                BounceResult::Count(r, g, b) => (r, g, b),
-                BounceResult::Kill => (0, 0, 0),
-                _ => panic!("Something has gone wrong."),
-            });
-            pbar.inc(1);
-        }
+        let result = self
+            .pixel_centers()
+            .into_par_iter()
+            .map(|pxc| {
+                let mut ray = Ray {
+                    origin: self.origin,
+                    direction: pxc - self.origin,
+                    vop: self.vop.clone(),
+                };
+                let result = match ray.launch(scene) {
+                    BounceResult::Count(r, g, b) => (r, g, b),
+                    BounceResult::Kill => (0, 0, 0),
+                    _ => panic!("Something has gone wrong."),
+                };
+                pbar.inc(1);
+                result
+            })
+            .collect();
+
         let seconds = t0.elapsed().as_millis() as f64 / 1000.0;
         pbar.finish_and_clear();
 
@@ -145,9 +148,8 @@ impl Camera {
         println!(
             "Raytrace time: {}s, rays/s: {}.",
             seconds,
-            num_rays / seconds as u64
+            (num_rays as f64 / seconds) as u64
         );
-
         result
     }
 

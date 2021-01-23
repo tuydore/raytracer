@@ -1,3 +1,4 @@
+use rayon::ThreadPoolBuilder;
 use raytracer::{
     camera::CameraBuilder, surface::SurfaceBuilder, Camera, CheckerboardBuilder, PlaneBuilder,
     RectangleBuilder, SphereBuilder, Surface, ZParaboloidBuilder, VOP,
@@ -56,8 +57,17 @@ fn extract_camera(lhm: &Mapping, vop_map: &HashMap<String, Arc<VOP>>) -> Camera 
     camera_builder.build(vop_map)
 }
 
-// TODO: store these on stack somehow?
-fn extract_surfaces(lhm: &Mapping, vop_map: &HashMap<String, Arc<VOP>>) -> Vec<Arc<dyn Surface>> {
+fn extract_threads(lhm: &Mapping) -> Option<usize> {
+    match lhm.get(&Value::String("threads".to_owned())) {
+        Some(v) => Some(v.as_u64().expect("Number of threads must be an integer.") as usize),
+        None => None,
+    }
+}
+
+fn extract_surfaces(
+    lhm: &Mapping,
+    vop_map: &HashMap<String, Arc<VOP>>,
+) -> Vec<Arc<dyn Surface + Send + Sync>> {
     let surfaces = lhm
         .get(&Value::String("surfaces".to_owned()))
         .expect("No surfaces give")
@@ -101,6 +111,17 @@ fn extract_surfaces(lhm: &Mapping, vop_map: &HashMap<String, Arc<VOP>>) -> Vec<A
 
 fn main() {
     let document = load_from_yaml();
+
+    // if a number of threads has been given, set it
+    if let Some(x) = extract_threads(&document) {
+        ThreadPoolBuilder::new()
+            .num_threads(x)
+            .build_global()
+            .unwrap();
+        println!("Using {} thread(s).", x);
+    } else {
+        println!("Using {} thread(s)", num_cpus::get());
+    }
 
     let filepath = extract_filepath(&document);
     let volumes = extract_vops(&document);

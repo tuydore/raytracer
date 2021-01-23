@@ -11,6 +11,8 @@ image = "0.23"
 log = "0.4"
 serde_yaml = "0.8"
 indicatif = "0.15"
+rayon = "1.5"
+num_cpus = "1.13"
 
 [dependencies.serde]
 version = "1.0"

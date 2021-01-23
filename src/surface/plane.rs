@@ -24,7 +24,7 @@ pub struct PlaneBuilder {
 }
 
 impl SurfaceBuilder for PlaneBuilder {
-    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface> {
+    fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(Plane {
             geometry: InfinitePlaneShape {
                 origin: Point3D {
