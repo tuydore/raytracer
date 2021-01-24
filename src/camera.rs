@@ -1,11 +1,13 @@
-use crate::{ray::BounceResult, Point3D, Ray, Surface, Vector3D, VOP};
-use image::{Rgb, RgbImage};
-use indicatif::ProgressBar;
-use rayon::prelude::*;
-use serde::Deserialize;
-use std::collections::HashMap;
-use std::sync::Arc;
-use std::time::Instant;
+use {
+    crate::{ray::BounceResult, Point3D, Ray, Surface, Vector3D, VOP},
+    image::{Rgb, RgbImage},
+    rayon::prelude::*,
+    serde::Deserialize,
+    std::collections::HashMap,
+    std::sync::Arc,
+    std::time::Instant,
+};
+// use indicatif::ProgressBar;
 
 #[derive(Debug)]
 pub struct Camera {

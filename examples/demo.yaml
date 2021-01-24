@@ -1,0 +1,153 @@
+filepath: "demo.jpg"
+
+camera:
+  origin: [0.0, 0.0, 0.0]
+  gaze: [0.0, 1.0, 0.0]
+  up: [0.0, 0.0, 1.0]  # up must be orthogonal to gaze
+  fov: [32.0, 18.0]
+  density: 200.0
+  vop: air
+
+volumes:
+  air:
+    ior: 1.0
+    abs: [0.0001, 0.001, 0.0] # RGB absorption per distance
+  glass:
+    ior: 1.5
+    abs: [0.0, 0.0, 0.0]
+  dark_glass:
+    ior: 1.5
+    abs: [0.1, 0.1, 0.1]
+
+surfaces:
+  - type: checkerboard
+    origin: [3.0, 0.0, 0.0]
+    normal: [-1.0, 0.0, 0.0]
+    orientation: [0.0, 1.0, 0.0]
+    sop:
+      light: [255, 255, 255] # RGB value of tile
+    tile_size: 2.0
+    vop_above: air
+    vop_below: air
+
+  - type: checkerboard
+    origin: [-3.0, 0.0, 0.0]
+    normal: [1.0, 0.0, 0.0]
+    orientation: [0.0, 1.0, 0.0]
+    sop:
+      light: [255, 255, 255]
+    tile_size: 2.0
+    vop_above: air
+    vop_below: air
+  
+  - type: sphere
+    center: [0.0, 30.0, 0.0]
+    radius: 3.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: glass
+
+  - type: sphere
+    center: [0.0, 50.0, 0.0]
+    radius: 2.0
+    sop:
+      reflect: null
+    vop_above: air
+    vop_below: air
+
+  - type: sphere
+    center: [1.0, 40.0, -5.0]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: dark_glass
+
+  - type: sphere
+    center: [-1.0, 40.0, 5.0]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: dark_glass
+
+  - type: sphere
+    center: [1.0, 40.0, 2.5]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: dark_glass
+
+  - type: sphere
+    center: [-1.0, 40.0, -2.5]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: dark_glass
+    
+  - type: sphere
+    center: [1.0, 40.0, 7.5]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: dark_glass
+
+  - type: sphere
+    center: [-1.0, 40.0, -7.5]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: dark_glass
+    
+  - type: sphere
+    center: [1.0, 40.0, -10.0]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: dark_glass
+
+  - type: sphere
+    center: [-1.0, 40.0, 10.0]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: dark_glass
+    
+  - type: sphere
+    center: [1.0, 40.0, 12.5]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: dark_glass
+
+  - type: sphere
+    center: [-1.0, 40.0, -12.5]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: dark_glass
+
+  - type: sphere
+    center: [1.0, 40.0, -15.0]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: dark_glass
+
+  - type: sphere
+    center: [-1.0, 40.0, 15.0]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: dark_glass

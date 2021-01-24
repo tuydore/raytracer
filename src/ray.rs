@@ -8,7 +8,7 @@ pub struct Ray {
     pub origin: Point3D,
     pub direction: Vector3D,
     pub vop: Arc<VOP>,
-    pub abs: [f64; 3],
+    pub abs: [f64; 3], // TODO: ray absorption when ray has no more intersections?
 }
 
 impl Ray {

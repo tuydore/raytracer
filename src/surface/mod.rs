@@ -24,6 +24,8 @@ pub enum SOP {
     Dark,
 }
 
+// TODO: SOP by loading image texture?
+
 pub trait Surface {
     fn geometry(&self) -> &dyn Shape;
 

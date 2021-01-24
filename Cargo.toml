@@ -17,6 +17,6 @@ num_cpus = "1.13"
 version = "1.0"
 features = ["derive"]
 
-[dependencies.indicatif]
-version = "0.15" 
-features = ["rayon"]
+# [dependencies.indicatif]
+# version = "0.15" 
+# features = ["rayon"]
