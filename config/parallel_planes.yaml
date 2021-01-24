@@ -1,0 +1,57 @@
+filepath: "/home/tuydore/repositories/raytracer/results/parallel_planes.jpg"
+
+camera:
+  origin: [0.0, 0.0, 0.0]
+  gaze: [0.0, 1.0, 0.0]
+  up: [0.0, 0.0, 1.0]
+  fov: [18.0, 32.0]
+  density: 200.0
+  vop: air
+
+volumes:
+  air:
+    ior: 1.0
+    abs: [0.0, 0.01, 0.0]
+  glass:
+    ior: 1.5
+    abs: [0.0, 0.0, 0.0]
+  blue_glass:
+    ior: 1.5
+    abs: [0.2, 0.2, 0.0]
+
+surfaces:
+  - type: checkerboard
+    origin: [3.0, 0.0, 0.0]
+    normal: [-1.0, 0.0, 0.0]
+    orientation: [0.0, 1.0, 0.0]
+    sop:
+      light: [255, 255, 255]
+    tile_size: 2.0
+    vop_above: air
+    vop_below: air
+
+  - type: checkerboard
+    origin: [-3.0, 0.0, 0.0]
+    normal: [1.0, 0.0, 0.0]
+    orientation: [0.0, 1.0, 0.0]
+    sop:
+      light: [255, 255, 255]
+    tile_size: 2.0
+    vop_above: air
+    vop_below: air
+  
+  - type: sphere
+    center: [0.0, 20.0, 0.0]
+    radius: 3.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: glass
+
+  - type: sphere
+    center: [0.0, 45.0, 0.0]
+    radius: 1.0
+    sop:
+      refract: null
+    vop_above: air
+    vop_below: blue_glass

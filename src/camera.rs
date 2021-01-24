@@ -130,6 +130,7 @@ impl Camera {
                 origin: self.origin,
                 direction: pxc - self.origin,
                 vop: self.vop.clone(),
+                abs: [0.0; 3],
             })
             .collect();
 
@@ -197,13 +198,19 @@ mod tests {
 
     #[test]
     fn screen_resolution() {
-        let air = Arc::new(VOP { ior: 1.0 });
+        let air = Arc::new(VOP {
+            ior: 1.0,
+            abs: [0.0; 3],
+        });
         assert_eq!(camera(air).screen_resolution(), (20, 30))
     }
 
     #[test]
     fn screen_size() {
-        let air = Arc::new(VOP { ior: 1.0 });
+        let air = Arc::new(VOP {
+            ior: 1.0,
+            abs: [0.0; 3],
+        });
         let calc = camera(air).screen_size();
         let theo = (0.35265, 0.53590);
         assert!((calc.0 - theo.0).abs() <= 1e-5);

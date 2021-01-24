@@ -1,5 +1,5 @@
-filepath: "/home/tuydore/repositories/raytracer/results/test_yaml.jpg"
-threads: 12
+filepath: "/home/tuydore/repositories/raytracer/results/larger_glass_sphere.jpg"
+# threads: 12
 
 camera:
   origin: [30.0, 30.0, 15.0]
@@ -12,8 +12,10 @@ camera:
 volumes:
   air:
     ior: 1.0
+    abs: [0.0, 0.0, 0.0]
   glass:
-    ior: 1.5
+    ior: 1.7
+    abs: [0.0, 0.0, 0.0]
 
 surfaces:
   - type: checkerboard
@@ -27,8 +29,8 @@ surfaces:
     vop_below: air
   
   - type: sphere
-    center: [6.0, 6.0, 2.0]
-    radius: 2.0
+    center: [8.0, 8.0, 3.0]
+    radius: 3.0
     sop:
       refract: null
     vop_above: air

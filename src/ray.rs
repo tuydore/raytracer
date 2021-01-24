@@ -7,6 +7,7 @@ pub struct Ray {
     pub origin: Point3D,
     pub direction: Vector3D,
     pub vop: Arc<VOP>,
+    pub abs: [f64; 3],
 }
 
 impl Ray {
@@ -101,6 +102,12 @@ impl Ray {
     }
 
     pub fn bounce_unchecked(&mut self, surface: &dyn Surface, point: &Point3D) -> BounceResult {
+        // update ray's own absorption factor by the distance traveled in the current VOP
+        let distance = (self.origin - *point).length();
+        for i in 0..=2 {
+            self.abs[i] += self.vop.abs[i] * distance;
+        }
+
         let sop = surface.sop_at(point);
         match sop {
             SOP::Reflect => {
@@ -121,7 +128,15 @@ impl Ray {
                 }
                 BounceResult::Error
             }
-            SOP::Light(r, g, b) => BounceResult::Count(r, g, b),
+            SOP::Light(r, g, b) => {
+                let actual_rgb: Vec<u8> = self
+                    .abs
+                    .iter()
+                    .zip([r, g, b].iter())
+                    .map(|(absorption, value)| (*value as f64 * (-absorption).exp()) as u8)
+                    .collect();
+                BounceResult::Count(actual_rgb[0], actual_rgb[1], actual_rgb[2])
+            }
             SOP::Dark => BounceResult::Kill,
         }
     }

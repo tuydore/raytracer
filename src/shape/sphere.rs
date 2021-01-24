@@ -82,6 +82,7 @@ mod tests {
             origin: Point3D::new(0.0, 0.0, 10.0),
             direction: Vector3D::new(0.0, 0.0, -1.0),
             vop,
+            abs: [0.0; 3],
         }
     }
 
@@ -121,7 +122,10 @@ mod tests {
 
     #[test]
     fn ray_intersection() {
-        let air = Arc::new(VOP { ior: 1.0 });
+        let air = Arc::new(VOP {
+            ior: 1.0,
+            abs: [0.0; 3],
+        });
         assert_eq!(
             center_unit_sphere()
                 .intersection(&downwards_ray(air))
