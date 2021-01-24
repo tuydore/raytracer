@@ -3,11 +3,13 @@ pub mod plane;
 pub mod rectangle;
 pub mod sphere;
 pub mod zparaboloid;
-use crate::{Point3D, Shape, VOP};
-use serde::Deserialize;
-use std::collections::HashMap;
-use std::sync::Arc;
 
+use {
+    crate::{Point3D, Shape, VOP},
+    serde::Deserialize,
+    std::collections::HashMap,
+    std::sync::Arc,
+};
 pub use {
     checkerboard::CheckerboardBuilder, plane::PlaneBuilder, rectangle::RectangleBuilder,
     sphere::SphereBuilder, zparaboloid::ZParaboloidBuilder,

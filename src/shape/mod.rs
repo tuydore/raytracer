@@ -3,7 +3,7 @@ mod paraboloid;
 mod rectangle;
 mod sphere;
 
-use crate::{Point3D, Ray, Vector3D, SURFACE_INCLUSION};
+use crate::{Point3D, Ray, Vector3D, TOLERANCE};
 pub use {
     infiniteplane::InfinitePlaneShape, paraboloid::ParaboloidShape, rectangle::RectangleShape,
     sphere::SphereShape,
@@ -42,7 +42,7 @@ pub fn plane_contains_point(
     plane_normal: &Vector3D,
     point: &Point3D,
 ) -> bool {
-    plane_normal.dot(&(*plane_origin - *point)).abs() <= SURFACE_INCLUSION
+    plane_normal.dot(&(*plane_origin - *point)).abs() <= TOLERANCE
 }
 
 pub fn plane_intersects_ray(

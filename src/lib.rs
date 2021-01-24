@@ -10,12 +10,8 @@ pub use {
     camera::Camera,
     ray::{BounceResult, Ray},
     shape::Shape,
-    surface::{
-        CheckerboardBuilder, PlaneBuilder, RectangleBuilder, SphereBuilder, Surface,
-        ZParaboloidBuilder, SOP,
-    },
+    surface::{Surface, SOP},
     vop::VOP,
 };
 
-pub const SURFACE_INCLUSION: f64 = 1e-5;
-pub const VECTOR_IDENTITY: f64 = 1e-5;
+pub const TOLERANCE: f64 = 1e-5;

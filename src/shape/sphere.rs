@@ -1,5 +1,5 @@
 use super::{pick_closest_intersection, Shape};
-use crate::{Point3D, Ray, Vector3D, SURFACE_INCLUSION};
+use crate::{Point3D, Ray, Vector3D, TOLERANCE};
 
 pub struct SphereShape {
     pub center: Point3D,
@@ -48,7 +48,7 @@ impl Shape for SphereShape {
     }
 
     fn contains(&self, point: &Point3D) -> bool {
-        ((self.center - *point).length() - self.radius).abs() <= SURFACE_INCLUSION
+        ((self.center - *point).length() - self.radius).abs() <= TOLERANCE
     }
 
     fn normal_at(&self, point: &Point3D) -> Option<Vector3D> {

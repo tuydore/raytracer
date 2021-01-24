@@ -1,6 +1,7 @@
-use crate::{Point3D, Surface, Vector3D, SOP, VOP};
-use std::error::Error;
-use std::sync::Arc;
+use {
+    crate::{Point3D, Surface, Vector3D, SOP, VOP},
+    std::{error::Error, sync::Arc},
+};
 
 #[derive(Debug, Clone)]
 pub struct Ray {
@@ -182,7 +183,7 @@ impl Ray {
     }
 }
 
-/// Result returned by ray bounce operation. This can beone of the following:
+/// Result returned by ray bounce operation. This can be one of the following:
 /// * `Count` - the ray has reached a light source and therefore must be counted.
 /// * `Kill` - the ray has reached a determined "dark" spot (either due to being out-of bounds or
 ///     a perfectly absorbant material) and is to be gracefully terminated.
@@ -196,4 +197,229 @@ pub enum BounceResult {
     Kill,
     Continue,
     Error,
+}
+
+#[cfg(test)]
+mod tests {
+    use {
+        super::*,
+        crate::{shape::InfinitePlaneShape, surface::plane::Plane, TOLERANCE},
+    };
+
+    fn air() -> Arc<VOP> {
+        Arc::new(VOP {
+            ior: 1.0,
+            abs: [0.0, 0.0, 0.0],
+        })
+    }
+
+    fn glass() -> Arc<VOP> {
+        Arc::new(VOP {
+            ior: 1.5,
+            abs: [0.0, 0.0, 0.0],
+        })
+    }
+
+    fn reflective_plane(air: Arc<VOP>) -> Plane {
+        Plane {
+            geometry: InfinitePlaneShape {
+                origin: Point3D::new(0.0, 0.0, 0.0),
+                normal: Vector3D::pz(),
+            },
+            sop: SOP::Reflect,
+            vop_above: air.clone(),
+            vop_below: air,
+        }
+    }
+
+    #[cfg(test)]
+    mod direction {
+        //! Test that the direction of a ray is correctly updated during reflection and refraction
+        //! operations. Because this is solely dependent on the correct implementation of the
+        //! `Surface` trait for each object, it only makes sense to test for a single one and test
+        //! `Surface` implementation separately, per surface type.
+        use super::*;
+
+        fn refractive_plane(air: Arc<VOP>, glass: Arc<VOP>) -> Plane {
+            Plane {
+                geometry: InfinitePlaneShape {
+                    origin: Point3D {
+                        x: 0.0,
+                        y: 0.0,
+                        z: 0.0,
+                    },
+                    normal: Vector3D::pz(),
+                },
+                sop: SOP::Refract,
+                vop_above: air,
+                vop_below: glass,
+            }
+        }
+
+        #[test]
+        fn refraction_orthogonal() {
+            let air = air();
+            let glass = glass();
+            let plane = refractive_plane(air.clone(), glass);
+            let mut downward_ray = Ray {
+                origin: Point3D::new(0.0, 0.0, 1.0),
+                direction: Vector3D::mz(),
+                vop: air,
+                abs: [0.0; 3],
+            };
+            downward_ray.bounce_unchecked(&plane, &Point3D::new(0.0, 0.0, 0.0));
+            assert_eq!(downward_ray.direction.normalized(), Vector3D::mz());
+            assert_eq!(downward_ray.origin, Point3D::new(0.0, 0.0, 0.0));
+        }
+
+        #[test]
+        fn snells_law_from_above() {
+            let air = air();
+            let glass = glass();
+            let plane = refractive_plane(air.clone(), glass);
+            let original_ray = Ray {
+                origin: Point3D::new(1.0, 0.0, 1.0),
+                direction: Vector3D::new(-1.0, 0.0, -1.0),
+                vop: air,
+                abs: [0.0; 3],
+            };
+            let mut ray = original_ray.clone();
+            let intersection = plane.geometry().intersection(&original_ray).unwrap();
+            ray.bounce_unchecked(&plane, &Point3D::new(0.0, 0.0, 0.0));
+
+            // calculate via snell's law
+            let normal = plane
+                .geometry()
+                .normal_at(&ray.origin)
+                .unwrap()
+                .normalized();
+            let theta_i = normal
+                .dot(&(-1.0 * original_ray.direction).normalized())
+                .acos();
+            let theta_t = (-1.0 * normal).dot(&ray.direction.normalized()).acos();
+            assert!(
+                plane.vop_above_at(&intersection).ior * theta_i.sin()
+                    - plane.vop_below_at(&intersection).ior * theta_t.sin()
+                    <= f64::EPSILON
+            );
+        }
+
+        #[test]
+        fn snells_law_from_below() {
+            let air = air();
+            let glass = glass();
+            let plane = refractive_plane(air, glass.clone());
+            let original_ray = Ray {
+                origin: Point3D::new(0.2, 0.0, -1.0),
+                direction: Vector3D::new(-0.2, 0.0, 1.0),
+                vop: glass,
+                abs: [0.0; 3],
+            };
+            let intersection = plane.geometry().intersection(&original_ray).unwrap();
+            let mut ray = original_ray.clone();
+            ray.bounce_unchecked(&plane, &Point3D::new(0.0, 0.0, 0.0));
+
+            // calculate via snell's law
+            let normal = plane
+                .geometry()
+                .normal_at(&ray.origin)
+                .unwrap()
+                .normalized();
+            let theta_i = normal.dot(&(original_ray.direction).normalized()).acos();
+            let theta_t = normal.dot(&ray.direction.normalized());
+            assert!(
+                plane.vop_below_at(&intersection).ior * theta_i.sin()
+                    - plane.vop_above_at(&intersection).ior * theta_t.sin()
+                    <= f64::EPSILON
+            );
+        }
+
+        #[test]
+        fn reflection_air() {
+            let air = air();
+            let sphere = reflective_plane(air.clone());
+            let mut ray = Ray {
+                origin: Point3D::new(1.0, 0.0, 1.0),
+                direction: Vector3D::new(-1.0, 0.0, -1.0),
+                vop: air,
+                abs: [0.0; 3],
+            };
+            ray.bounce_unchecked(&sphere, &Point3D::new(0.0, 0.0, 0.0));
+            assert_eq!(ray.origin, Point3D::new(0.0, 0.0, 0.0));
+            assert!(
+                (ray.direction.normalized() - Vector3D::new(-1.0, 0.0, 1.0).normalized())
+                    .length_squared()
+                    <= TOLERANCE
+            );
+        }
+
+        // TODO: test TIR
+    }
+
+    #[cfg(test)]
+    mod lifetime {
+        //! Test that rays are appropriately killed when reaching Dark areas or when no further
+        //! intersections are discovered.
+        use super::*;
+
+        fn downwards_ray(vop: Arc<VOP>) -> Ray {
+            Ray {
+                origin: Point3D::new(0.0, 0.0, 10.0),
+                direction: Vector3D::new(0.0, 0.0, -1.0),
+                vop,
+                abs: [0.0; 3],
+            }
+        }
+
+        fn light_plane(vop: Arc<VOP>) -> Plane {
+            Plane {
+                geometry: InfinitePlaneShape {
+                    origin: Point3D::new(0.0, 0.0, 0.0),
+                    normal: Vector3D::new(0.0, 0.0, 1.0),
+                },
+                sop: SOP::Light(255, 255, 255),
+                vop_above: vop.clone(),
+                vop_below: vop,
+            }
+        }
+
+        fn dark_plane(vop: Arc<VOP>) -> Plane {
+            Plane {
+                geometry: InfinitePlaneShape {
+                    origin: Point3D::new(0.0, 0.0, 0.0),
+                    normal: Vector3D::new(0.0, 0.0, 1.0),
+                },
+                sop: SOP::Dark,
+                vop_above: vop.clone(),
+                vop_below: vop,
+            }
+        }
+
+        #[test]
+        fn counted_ray() {
+            let air = air();
+            let mut ray = downwards_ray(air.clone());
+            let plane = light_plane(air);
+            assert_eq!(
+                ray.launch(&[Arc::new(plane)]),
+                BounceResult::Count(255, 255, 255)
+            );
+        }
+
+        #[test]
+        fn ray_killed_at_dark_plane() {
+            let air = air();
+            let mut ray = downwards_ray(air.clone());
+            let plane = dark_plane(air);
+            assert_eq!(ray.launch(&[Arc::new(plane)]), BounceResult::Kill);
+        }
+
+        #[test]
+        fn ray_killed_no_more_intersections() {
+            let air = air();
+            let mut ray = downwards_ray(air.clone());
+            let plane = reflective_plane(air);
+            assert_eq!(ray.launch(&[Arc::new(plane)]), BounceResult::Kill);
+        }
+    }
 }

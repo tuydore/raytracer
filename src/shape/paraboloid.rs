@@ -1,6 +1,6 @@
 use core::f64;
 
-use crate::{Point3D, Ray, Shape, Vector3D, SURFACE_INCLUSION};
+use crate::{Point3D, Ray, Shape, Vector3D, TOLERANCE};
 
 use super::pick_closest_intersection;
 // TODO: check asq and bsq are > 0
@@ -53,7 +53,7 @@ impl Shape for ParaboloidShape {
         ((point.x - self.x0).powi(2) / self.asq + (point.y - self.y0).powi(2) / self.bsq + self.z0
             - point.z)
             .abs()
-            <= SURFACE_INCLUSION
+            <= TOLERANCE
     }
 
     fn origin(&self) -> Point3D {

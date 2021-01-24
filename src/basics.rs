@@ -1,5 +1,5 @@
 use {
-    crate::{SURFACE_INCLUSION, VECTOR_IDENTITY},
+    crate::TOLERANCE,
     serde::Deserialize,
     std::ops::{Add, AddAssign, Div, Mul, Sub, SubAssign},
 };
@@ -100,9 +100,9 @@ impl PartialEq for Vector3D {
         [self.x, self.y, self.z, other.x, other.y, other.z]
             .iter()
             .all(|x| x.is_finite())
-            && (self.x - other.x).abs() <= VECTOR_IDENTITY
-            && (self.y - other.y).abs() <= VECTOR_IDENTITY
-            && (self.z - other.z).abs() <= VECTOR_IDENTITY
+            && (self.x - other.x).abs() <= TOLERANCE
+            && (self.y - other.y).abs() <= TOLERANCE
+            && (self.z - other.z).abs() <= TOLERANCE
     }
 }
 
@@ -244,9 +244,9 @@ impl PartialEq for Point3D {
         [self.x, self.y, self.z, other.x, other.y, other.z]
             .iter()
             .all(|x| x.is_finite())
-            && (self.x - other.x).abs() <= SURFACE_INCLUSION
-            && (self.y - other.y).abs() <= SURFACE_INCLUSION
-            && (self.z - other.z).abs() <= SURFACE_INCLUSION
+            && (self.x - other.x).abs() <= TOLERANCE
+            && (self.y - other.y).abs() <= TOLERANCE
+            && (self.z - other.z).abs() <= TOLERANCE
     }
 }
 

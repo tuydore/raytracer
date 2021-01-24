@@ -1,10 +1,16 @@
-use rayon::ThreadPoolBuilder;
-use raytracer::{
-    camera::CameraBuilder, surface::SurfaceBuilder, Camera, CheckerboardBuilder, PlaneBuilder,
-    RectangleBuilder, SphereBuilder, Surface, ZParaboloidBuilder, VOP,
+use {
+    rayon::ThreadPoolBuilder,
+    raytracer::{
+        camera::CameraBuilder,
+        surface::{
+            CheckerboardBuilder, PlaneBuilder, RectangleBuilder, SphereBuilder, SurfaceBuilder,
+            ZParaboloidBuilder,
+        },
+        Camera, Surface, VOP,
+    },
+    serde_yaml::{from_str, from_value, Mapping, Value},
+    std::{collections::HashMap, env, fs, sync::Arc},
 };
-use serde_yaml::{from_str, from_value, Mapping, Value};
-use std::{collections::HashMap, env, fs, sync::Arc};
 
 /// Load the given configuration file and return its contents as a parsed yaml hash.
 fn load_from_yaml() -> Mapping {
@@ -135,6 +141,5 @@ fn main() {
 
     let result = camera.look(&surfaces);
     camera.save_jpg(&filepath, result);
-
-    // println!("{:#?}", surfaces);
+    println!("Result saved: {}", filepath);
 }
