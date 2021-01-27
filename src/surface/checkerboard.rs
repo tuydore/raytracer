@@ -44,7 +44,7 @@ impl Surface for Checkerboard {
             .unwrap()
             .cross(&self.orientation)
             .normalized();
-        let x = self.orientation.normalized();
+        let x = self.orientation.normalized(); // TODO: should be by default
         let from_origin = *point - self.geometry().origin();
 
         let size_x = from_origin.dot(&x) / self.tile_size;

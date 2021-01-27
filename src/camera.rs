@@ -98,7 +98,7 @@ impl Camera {
 
         // starting point is the center of the top-left PIXEL, not the screen itself
         let upper_left_pixel_center =
-            self.screen_upper_left_corner() + r * pixel_size_y + d * pixel_size_x;
+            self.screen_upper_left_corner() + r * pixel_size_y / 2.0 + d * pixel_size_x / 2.0;
 
         let mut centers = Vec::new();
         for i in 0..npx {
@@ -217,5 +217,24 @@ mod tests {
         let theo = (0.35265, 0.53590);
         assert!((calc.0 - theo.0).abs() <= 1e-5);
         assert!((calc.1 - theo.1).abs() <= 1e-5);
+    }
+
+    #[test]
+    fn ray_centering() {
+        let air = VOP {
+            ior: 1.0,
+            abs: [0.0, 0.0, 0.0],
+        };
+        let camera = Camera {
+            origin: Point3D::new(0.0, 0.0, 0.0),
+            gaze: Vector3D::py(),
+            up: Vector3D::pz(),
+            fov: [1.0, 1.0],
+            density: 1.0,
+            vop: Arc::new(air),
+        };
+        let centers = camera.pixel_centers();
+        assert_eq!(centers.len(), 1);
+        assert_eq!(centers[0], Point3D::new(0.0, 1.0, 0.0));
     }
 }
