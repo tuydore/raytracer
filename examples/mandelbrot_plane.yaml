@@ -1,4 +1,4 @@
-filepath: "/home/tuydore/Pictures/raytraces/mandelbrot_plane_with_abs.jpg"
+filepath: "mandelbrot_plane.jpg"
 
 camera:
   origin: [-10.0, 2.0, 1.0]
@@ -20,6 +20,7 @@ surfaces:
     orientation: [0.0, 1.0, 0.0]
     vop_above: air
     vop_below: air
+    colormap: plasma
     mandelbrot_origin: [0.75, 0.1]
     mandelbrot_scale: 500.0
     mandelbrot_maxiter: 200

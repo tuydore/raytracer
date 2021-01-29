@@ -2,6 +2,7 @@ use {
     super::{mandelbrotsphere::mandelbrot, Surface, SurfaceBuilder},
     crate::{shape::InfinitePlaneShape, Point3D, Shape, Vector3D, SOP, VOP},
     collections::HashMap,
+    scarlet::colormap::ListedColorMap,
     serde::Deserialize,
     std::collections,
     std::sync::Arc,
@@ -12,6 +13,7 @@ pub struct MandelbrotPlane {
     pub orientation: Vector3D,
     pub vop_above: Arc<VOP>,
     pub vop_below: Arc<VOP>,
+    pub colormap: Vec<[f64; 3]>,
     pub mandelbrot_scale: f64,
     pub mandelbrot_maxiter: usize,
     pub mandelbrot_origin: [f64; 2],
@@ -22,6 +24,7 @@ pub struct MandelbrotPlaneBuilder {
     pub origin: [f64; 3],
     pub normal: [f64; 3],
     pub orientation: [f64; 3],
+    pub colormap: String,
     pub vop_below: String,
     pub vop_above: String,
     #[serde(default = "default_mandelbrot_origin")]
@@ -64,6 +67,13 @@ impl SurfaceBuilder for MandelbrotPlaneBuilder {
                 y: self.orientation[1],
                 z: self.orientation[2],
             },
+            colormap: match self.colormap.as_str() {
+                "viridis" => ListedColorMap::viridis().vals,
+                "magma" => ListedColorMap::magma().vals,
+                "inferno" => ListedColorMap::inferno().vals,
+                "plasma" => ListedColorMap::plasma().vals,
+                s => panic!("Unknown color map {}", s),
+            },
             vop_above: vop_map
                 .get(&self.vop_above)
                 .expect("No VOP above mapping found.")
@@ -102,14 +112,23 @@ impl Surface for MandelbrotPlane {
 
         let xproj = from_origin.dot(&x);
         let yproj = from_origin.dot(&y);
-        let val = mandelbrot(
+        let x = mandelbrot(
             xproj / self.mandelbrot_scale - self.mandelbrot_origin[0],
             yproj / self.mandelbrot_scale - self.mandelbrot_origin[1],
             // (xproj - self.mandelbrot_origin[0]) / self.mandelbrot_scale,
             // (yproj - self.mandelbrot_origin[1]) / self.mandelbrot_scale,
             self.mandelbrot_maxiter,
         );
-        let color = 255 - (val * 255 / self.mandelbrot_maxiter) as u8;
-        SOP::Light(color, color, color)
+        if x == self.mandelbrot_maxiter {
+            SOP::Dark
+        } else {
+            let rgb_float: [f64; 3] =
+                self.colormap[self.colormap.len() * x / self.mandelbrot_maxiter];
+            SOP::Light(
+                (rgb_float[0] * 255.0) as u8,
+                (rgb_float[1] * 255.0) as u8,
+                (rgb_float[2] * 255.0) as u8,
+            )
+        }
     }
 }
