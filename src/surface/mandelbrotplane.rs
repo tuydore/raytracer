@@ -1,7 +1,8 @@
 use {
-    super::{mandelbrotsphere::mandelbrot, Surface, SurfaceBuilder},
+    super::{Surface, SurfaceBuilder},
     crate::{shape::InfinitePlaneShape, Point3D, Shape, Vector3D, SOP, VOP},
     collections::HashMap,
+    num_complex::Complex,
     scarlet::colormap::ListedColorMap,
     serde::Deserialize,
     std::collections,
@@ -45,6 +46,17 @@ fn default_mandelbrot_scale() -> f64 {
 
 fn default_mandelbrot_maxiter() -> usize {
     50
+}
+
+pub fn mandelbrot(x: f64, y: f64, max_iter: usize) -> usize {
+    let coord = Complex::new(x, y);
+    let mut z = Complex::new(0.0, 0.0);
+    let mut n = 0;
+    while z.norm() <= 2.0 && n < max_iter {
+        z = z.powu(2) + coord;
+        n += 1;
+    }
+    n
 }
 
 impl SurfaceBuilder for MandelbrotPlaneBuilder {

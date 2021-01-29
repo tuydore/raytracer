@@ -1,6 +1,5 @@
 pub mod checkerboard;
 pub mod mandelbrotplane;
-pub mod mandelbrotsphere;
 pub mod plane;
 pub mod rectangle;
 pub mod sphere;
@@ -14,8 +13,8 @@ use {
 };
 pub use {
     checkerboard::CheckerboardBuilder, mandelbrotplane::MandelbrotPlaneBuilder,
-    mandelbrotsphere::MandelbrotSphereBuilder, plane::PlaneBuilder, rectangle::RectangleBuilder,
-    sphere::SphereBuilder, zparaboloid::ZParaboloidBuilder,
+    plane::PlaneBuilder, rectangle::RectangleBuilder, sphere::SphereBuilder,
+    zparaboloid::ZParaboloidBuilder,
 };
 
 #[derive(Debug, Clone, Copy, Deserialize)]

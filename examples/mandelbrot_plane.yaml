@@ -1,4 +1,4 @@
-filepath: "mandelbrot_plane.jpg"
+filepath: "mandelbrot_plane_magma.jpg"
 
 camera:
   origin: [-10.0, 2.0, 1.0]
@@ -11,7 +11,7 @@ camera:
 volumes:
   air:
     ior: 1.0
-    abs: [0.0001, 0.0001, 0.0001]
+    abs: [0.0, 0.0, 0.0]
 
 surfaces:
   - type: mandelbrotplane
@@ -20,10 +20,10 @@ surfaces:
     orientation: [0.0, 1.0, 0.0]
     vop_above: air
     vop_below: air
-    colormap: plasma
+    colormap: magma
     mandelbrot_origin: [0.75, 0.1]
     mandelbrot_scale: 500.0
-    mandelbrot_maxiter: 200
+    mandelbrot_maxiter: 100
 
   - type: sphere
     center: [0.0, 1.0, 1.0]
@@ -40,12 +40,3 @@ surfaces:
       reflect: null
     vop_above: air
     vop_below: air
-
-  # - type: zparaboloid
-  #   origin: [0.0, 0.0, -10.0]
-  #   a: 0.25
-  #   b: 0.25
-  #   sop:
-  #     reflect: null
-  #   vop_above: air
-  #   vop_below: air
