@@ -124,7 +124,8 @@ impl Camera {
         // pbar.enable_steady_tick(1000);
 
         // create all rays
-        println!("Pre-generating {} rays...", num_rays);
+        print!("Pre-generating {} rays... ", num_rays);
+        let t0 = Instant::now();
         let rays: Vec<Ray> = self
             .pixel_centers()
             .into_iter()
@@ -135,9 +136,10 @@ impl Camera {
                 abs: [0.0; 3],
             })
             .collect();
+        println!("done ({}s)", t0.elapsed().as_millis() as f64 / 1000.0);
 
         // start timer
-        println!("Starting raytrace...");
+        print!("Starting raytrace...");
         let t0 = Instant::now();
 
         let mut result: Vec<(usize, u8, u8, u8)> = rays
@@ -162,7 +164,7 @@ impl Camera {
 
         // show total time
         println!(
-            "Raytrace time: {}s, rays/s: {}.",
+            "done (total time: {}s, rays/s: {})",
             seconds,
             (num_rays as f64 / seconds) as u64
         );

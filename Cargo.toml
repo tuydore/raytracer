@@ -11,6 +11,7 @@ image = "0.23"
 serde_yaml = "0.8"
 rayon = "1.5"
 num_cpus = "1.13"
+num-complex = "0.3"
 
 [dependencies.serde]
 version = "1.0"

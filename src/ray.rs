@@ -70,7 +70,7 @@ impl Ray {
         let normal = surface
             .geometry()
             .normal_at(&point)
-            .expect("No normal found at point.");
+            .unwrap_or_else(|| panic!("No normal found at point {:?}.", point));
 
         // ray is inbound from medium into which normal points
         if normal.dot(&self.direction) <= 0.0 {
