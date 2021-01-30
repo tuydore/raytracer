@@ -1,4 +1,5 @@
 pub mod checkerboard;
+pub mod mandelbrotplane;
 pub mod mandelbrotsphere;
 pub mod plane;
 pub mod rectangle;
@@ -12,9 +13,9 @@ use {
     std::sync::Arc,
 };
 pub use {
-    checkerboard::CheckerboardBuilder, mandelbrotsphere::MandelbrotSphereBuilder,
-    plane::PlaneBuilder, rectangle::RectangleBuilder, sphere::SphereBuilder,
-    zparaboloid::ZParaboloidBuilder,
+    checkerboard::CheckerboardBuilder, mandelbrotplane::MandelbrotPlaneBuilder,
+    mandelbrotsphere::MandelbrotSphereBuilder, plane::PlaneBuilder, rectangle::RectangleBuilder,
+    sphere::SphereBuilder, zparaboloid::ZParaboloidBuilder,
 };
 
 #[derive(Debug, Clone, Copy, Deserialize)]

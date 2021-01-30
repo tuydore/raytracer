@@ -48,7 +48,7 @@ fn default_mandelbrot_maxiter() -> usize {
     50
 }
 
-fn mandelbrot(x: f64, y: f64, max_iter: usize) -> usize {
+pub fn mandelbrot(x: f64, y: f64, max_iter: usize) -> usize {
     let coord = Complex::new(x, y);
     let mut z = Complex::new(0.0, 0.0);
     let mut n = 0;
@@ -102,8 +102,8 @@ impl MandelbrotSphere {
     /// Get value of Mandelbrot fractal at given coordinate, as function of number of iterations.
     fn mandelbrot_scaled(&self, x: f64, y: f64, max_iter: usize) -> usize {
         mandelbrot(
-            (x - self.mandelbrot_origin[0]) / self.mandelbrot_scale,
-            (y - self.mandelbrot_origin[1]) / self.mandelbrot_scale,
+            x / self.mandelbrot_scale - self.mandelbrot_origin[0], // TODO: reverse these
+            y / self.mandelbrot_scale - self.mandelbrot_origin[1],
             max_iter,
         )
     }

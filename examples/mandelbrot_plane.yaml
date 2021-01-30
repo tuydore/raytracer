@@ -1,0 +1,50 @@
+filepath: "/home/tuydore/Pictures/raytraces/mandelbrot_plane_with_abs.jpg"
+
+camera:
+  origin: [-10.0, 2.0, 1.0]
+  gaze: [1.0, 0.0, 0.0]
+  up: [0.0, 0.0, 1.0]
+  fov: [18.0, 32.0]
+  density: 200.0
+  vop: air
+
+volumes:
+  air:
+    ior: 1.0
+    abs: [0.0001, 0.0001, 0.0001]
+
+surfaces:
+  - type: mandelbrotplane
+    origin: [0.0, 0.0, 0.0]
+    normal: [0.0, 0.0, 1.0]
+    orientation: [0.0, 1.0, 0.0]
+    vop_above: air
+    vop_below: air
+    mandelbrot_origin: [0.75, 0.1]
+    mandelbrot_scale: 500.0
+    mandelbrot_maxiter: 200
+
+  - type: sphere
+    center: [0.0, 1.0, 1.0]
+    radius: 1.0
+    sop:
+      reflect: null
+    vop_above: air
+    vop_below: air
+
+  - type: plane
+    origin: [0.0, 0.0, 3.0]
+    normal: [0.0, 0.0, -1.0]
+    sop:
+      reflect: null
+    vop_above: air
+    vop_below: air
+
+  # - type: zparaboloid
+  #   origin: [0.0, 0.0, -10.0]
+  #   a: 0.25
+  #   b: 0.25
+  #   sop:
+  #     reflect: null
+  #   vop_above: air
+  #   vop_below: air
