@@ -115,6 +115,10 @@ impl Camera {
 
     /// Capture the scene before the camera's eyes.
     pub fn look(&self, scene: &[Arc<dyn Surface + Send + Sync>]) -> Vec<(u8, u8, u8)> {
+        // show resolution info
+        let (npx, npy) = self.screen_resolution();
+        println!("Screen resolution: {} x {}", npy, npx);
+
         // instantiate progress bar
         let num_rays: u64 = self.pixel_centers().len() as u64;
 

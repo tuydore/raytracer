@@ -89,7 +89,7 @@ impl MandelbrotSphere {
         let v_vertical: Vector3D = self.vertical * cos_theta;
         // find length of projection on equator slice
         let v_equator = v - v_vertical;
-        let cos_phi = v_equator.dot(&self.to_gmt_equator);
+        let cos_phi = v_equator.dot(&self.to_gmt_equator.normalized());
         (PI / 2.0 - cos_theta.acos(), cos_phi.acos())
     }
     /// Convert a set of longitude and latitude to a Mercator projection
