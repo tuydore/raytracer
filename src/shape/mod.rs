@@ -77,7 +77,7 @@ pub fn pick_closest_intersection(
     // filter out the ray's current position
     line_intersections = line_intersections
         .into_iter()
-        .filter(|p| *p != ray.origin)
+        .filter(|p| (*p - ray.origin).norm_squared() >= TOLERANCE)
         .collect();
 
     // filter out line intersections that are behind the ray's direction

@@ -39,8 +39,8 @@
                 }
             },
             "args": [
-                // "/home/tuydore/repositories/raytracer/debug/simple.yaml"
-                "/home/tuydore/Pictures/raytraces/demo.yaml"
+                "/home/tuydore/repositories/raytracer/debug/simple.yaml"
+                // "/home/tuydore/Pictures/raytraces/demo.yaml"
             ],
             "cwd": "${workspaceFolder}"
         },
