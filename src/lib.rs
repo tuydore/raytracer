@@ -1,4 +1,3 @@
-pub mod basics;
 pub mod camera;
 pub mod ray;
 pub mod shape;
