@@ -71,36 +71,25 @@ pub fn plane_intersects_ray(
 
 /// Pick closest ray intersection out of all possible line intersections.
 pub fn pick_closest_intersection(
-    mut line_intersections: Vec<Point3<f64>>,
+    line_intersections: Vec<Point3<f64>>,
     ray: &Ray,
 ) -> Option<Point3<f64>> {
-    // filter out the ray's current position
-    line_intersections = line_intersections
-        .into_iter()
-        .filter(|p| (*p - ray.origin).norm_squared() >= TOLERANCE)
-        .collect();
-
-    // filter out line intersections that are behind the ray's direction
-    line_intersections = line_intersections
-        .into_iter()
-        .filter(|p| (*p - ray.origin).dot(&ray.direction) >= 0.0)
-        .collect();
-
-    match line_intersections.len() {
-        0 => None,
-        1 => Some(line_intersections[0]),
-        // QUESTION: can this be inferred from definition of `line_intersection`?
-        _ => {
-            let squared_distances: Vec<f64> = line_intersections
-                .iter()
-                .map(|p| (*p - ray.origin).norm_squared())
-                .collect();
-            let min_index = if squared_distances[0] < squared_distances[1] {
-                0
-            } else {
-                1
-            };
-            Some(line_intersections[min_index])
-        }
+    if line_intersections.is_empty() {
+        return None;
     }
+    let mut enumerated_dsq: Vec<(usize, f64)> = line_intersections
+        .iter()
+        .enumerate()
+        .map(|(i, p)| (i, *p - ray.origin))
+        .filter(|(_, d)| d.dot(&ray.direction) >= 0.0)
+        .map(|(i, d)| (i, d.norm_squared()))
+        .filter(|(_, d2)| *d2 >= TOLERANCE)
+        .collect();
+
+    if enumerated_dsq.is_empty() {
+        return None;
+    }
+
+    enumerated_dsq.sort_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap());
+    Some(line_intersections[enumerated_dsq[0].0])
 }
