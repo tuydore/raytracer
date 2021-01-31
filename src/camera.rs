@@ -34,8 +34,8 @@ impl CameraBuilder {
     pub fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Camera {
         Camera {
             origin: Point3::from_slice(&self.origin),
-            gaze: Vector3::from_row_slice(&self.origin),
-            up: Vector3::from_row_slice(&self.origin),
+            gaze: Vector3::from_row_slice(&self.gaze),
+            up: Vector3::from_row_slice(&self.up),
             fov: self.fov,
             density: self.density,
             vop: vop_map

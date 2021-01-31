@@ -23,7 +23,7 @@ impl Ray {
                 .map(|s| s.geometry().intersection(self))
                 .map(|p| {
                     if let Some(point) = p {
-                        Some((point, (point - self.origin).norm()))
+                        Some((point, (point - self.origin).norm_squared()))
                     } else {
                         None
                     }
@@ -80,8 +80,8 @@ impl Ray {
                 panic!(
                     "VOP mismatch:\nray: {:#?}\nfrom: {:?}\ninto: {:?}\nintersection: {:?}\nnormal: {:?}",
                     self,
-                    vop_below,
                     vop_above,
+                    vop_below,
                     point,
                     normal,
                 )

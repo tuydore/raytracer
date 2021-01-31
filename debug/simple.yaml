@@ -1,0 +1,29 @@
+filepath: "/home/tuydore/Pictures/simple.jpg"
+threads: 1
+
+camera:
+  origin: [0.0, 0.0, 10.0]
+  gaze: [0.0, 0.0, -1.0]
+  up: [0.0, 1.0, 0.0]  # up must be orthogonal to gaze
+  fov: [30.0, 30.0]
+  density: 1.0
+  vop: air
+
+volumes:
+  air:
+    ior: 1.0
+    abs: [0.0, 0.0, 0.0] # RGB absorption per distance
+  glass:
+    ior: 1.5
+    abs: [0.0, 0.0, 0.0] # RGB absorption per distance
+
+surfaces:
+  - type: checkerboard
+    origin: [0.0, 0.0, 0.0]
+    normal: [0.0, 0.0, 1.0]
+    orientation: [0.0, 1.0, 0.0]
+    sop:
+      light: [255, 255, 255] # RGB value of tile
+    tile_size: 2.0
+    vop_above: air
+    vop_below: glass
