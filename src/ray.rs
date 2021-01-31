@@ -1,12 +1,13 @@
 use {
-    crate::{Point3D, Surface, Vector3D, SOP, VOP},
+    crate::{Surface, SOP, VOP},
+    nalgebra::{Point3, Vector3},
     std::{error::Error, sync::Arc},
 };
 
 #[derive(Debug, Clone)]
 pub struct Ray {
-    pub origin: Point3D,
-    pub direction: Vector3D,
+    pub origin: Point3<f64>,
+    pub direction: Vector3<f64>,
     pub vop: Arc<VOP>,
     pub abs: [f64; 3], // TODO: ray absorption when ray has no more intersections?
 }
@@ -17,12 +18,12 @@ impl Ray {
     pub fn launch(&mut self, surfaces: &[Arc<dyn Surface + Send + Sync>]) -> BounceResult {
         loop {
             // get all first intersections with surfaces and distances to them
-            let intersections: Vec<Option<(Point3D, f64)>> = surfaces
+            let intersections: Vec<Option<(Point3<f64>, f64)>> = surfaces
                 .iter()
                 .map(|s| s.geometry().intersection(self))
                 .map(|p| {
                     if let Some(point) = p {
-                        Some((point, point.distance_squared_to(&self.origin)))
+                        Some((point, (point - self.origin).norm()))
                     } else {
                         None
                     }
@@ -60,8 +61,8 @@ impl Ray {
     fn get_interaction_parameters_unchecked(
         &self,
         surface: &dyn Surface,
-        point: &Point3D,
-    ) -> Result<(Vector3D, Arc<VOP>, Arc<VOP>), Box<dyn Error>> {
+        point: &Point3<f64>,
+    ) -> Result<(Vector3<f64>, Arc<VOP>, Arc<VOP>), Box<dyn Error>> {
         // get VOPs above and below
         let vop_above = surface.vop_above_at(&point);
         let vop_below = surface.vop_below_at(&point);
@@ -102,9 +103,9 @@ impl Ray {
         }
     }
 
-    pub fn bounce_unchecked(&mut self, surface: &dyn Surface, point: &Point3D) -> BounceResult {
+    pub fn bounce_unchecked(&mut self, surface: &dyn Surface, point: &Point3<f64>) -> BounceResult {
         // update ray's own absorption factor by the distance traveled in the current VOP
-        let distance = (self.origin - *point).length();
+        let distance = (self.origin - *point).norm();
         for i in 0..=2 {
             self.abs[i] += self.vop.abs[i] * distance;
         }
@@ -143,18 +144,17 @@ impl Ray {
     }
 
     /// Reflect a ray in a surface.
-    fn reflect(&mut self, intersection: &Point3D, normal: &Vector3D) {
+    fn reflect(&mut self, intersection: &Point3<f64>, normal: &Vector3<f64>) {
         self.origin = *intersection;
-        self.direction +=
-            2.0 * self.direction.dot(&normal).abs() / normal.length_squared() * *normal;
+        self.direction += 2.0 * self.direction.dot(&normal).abs() / normal.norm_squared() * *normal;
     }
 
     /// Refract a ray in a surface.
     /// Reference: https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
     fn refract(
         &mut self,
-        intersection: &Point3D,
-        normal: &Vector3D,
+        intersection: &Point3<f64>,
+        normal: &Vector3<f64>,
         vop_above: Arc<VOP>,
         vop_below: Arc<VOP>,
     ) {
@@ -162,9 +162,9 @@ impl Ray {
         let nanb = vop_above.ior / vop_below.ior;
 
         // normal to surface at new contact point
-        let normal = normal.normalized();
-        self.direction = self.direction.normalized();
-        let cos_theta_i = normal.dot(&self.direction.reversed());
+        let normal = normal.normalize();
+        self.direction = self.direction.normalize();
+        let cos_theta_i = -normal.dot(&self.direction);
         let sin_sq_theta_t = nanb.powi(2) * (1.0 - cos_theta_i.powi(2));
 
         // critical angle
@@ -223,8 +223,8 @@ mod tests {
     fn reflective_plane(air: Arc<VOP>) -> Plane {
         Plane {
             geometry: InfinitePlaneShape {
-                origin: Point3D::new(0.0, 0.0, 0.0),
-                normal: Vector3D::pz(),
+                origin: Point3::origin(),
+                normal: Vector3::z(),
             },
             sop: SOP::Reflect,
             vop_above: air.clone(),
@@ -243,12 +243,8 @@ mod tests {
         fn refractive_plane(air: Arc<VOP>, glass: Arc<VOP>) -> Plane {
             Plane {
                 geometry: InfinitePlaneShape {
-                    origin: Point3D {
-                        x: 0.0,
-                        y: 0.0,
-                        z: 0.0,
-                    },
-                    normal: Vector3D::pz(),
+                    origin: Point3::origin(),
+                    normal: Vector3::z(),
                 },
                 sop: SOP::Refract,
                 vop_above: air,
@@ -262,14 +258,14 @@ mod tests {
             let glass = glass();
             let plane = refractive_plane(air.clone(), glass);
             let mut downward_ray = Ray {
-                origin: Point3D::new(0.0, 0.0, 1.0),
-                direction: Vector3D::mz(),
+                origin: Point3::origin(),
+                direction: -Vector3::z(),
                 vop: air,
                 abs: [0.0; 3],
             };
-            downward_ray.bounce_unchecked(&plane, &Point3D::new(0.0, 0.0, 0.0));
-            assert_eq!(downward_ray.direction.normalized(), Vector3D::mz());
-            assert_eq!(downward_ray.origin, Point3D::new(0.0, 0.0, 0.0));
+            downward_ray.bounce_unchecked(&plane, &Point3::origin());
+            assert_eq!(downward_ray.direction.normalize(), -Vector3::z());
+            assert_eq!(downward_ray.origin, Point3::origin());
         }
 
         #[test]
@@ -278,25 +274,21 @@ mod tests {
             let glass = glass();
             let plane = refractive_plane(air.clone(), glass);
             let original_ray = Ray {
-                origin: Point3D::new(1.0, 0.0, 1.0),
-                direction: Vector3D::new(-1.0, 0.0, -1.0),
+                origin: Point3::new(1.0, 0.0, 1.0),
+                direction: Vector3::new(-1.0, 0.0, -1.0),
                 vop: air,
                 abs: [0.0; 3],
             };
             let mut ray = original_ray.clone();
             let intersection = plane.geometry().intersection(&original_ray).unwrap();
-            ray.bounce_unchecked(&plane, &Point3D::new(0.0, 0.0, 0.0));
+            ray.bounce_unchecked(&plane, &Point3::origin());
 
             // calculate via snell's law
-            let normal = plane
-                .geometry()
-                .normal_at(&ray.origin)
-                .unwrap()
-                .normalized();
+            let normal = plane.geometry().normal_at(&ray.origin).unwrap().normalize();
             let theta_i = normal
-                .dot(&(-1.0 * original_ray.direction).normalized())
+                .dot(&(-1.0 * original_ray.direction).normalize())
                 .acos();
-            let theta_t = (-1.0 * normal).dot(&ray.direction.normalized()).acos();
+            let theta_t = (-1.0 * normal).dot(&ray.direction.normalize()).acos();
             assert!(
                 plane.vop_above_at(&intersection).ior * theta_i.sin()
                     - plane.vop_below_at(&intersection).ior * theta_t.sin()
@@ -310,23 +302,19 @@ mod tests {
             let glass = glass();
             let plane = refractive_plane(air, glass.clone());
             let original_ray = Ray {
-                origin: Point3D::new(0.2, 0.0, -1.0),
-                direction: Vector3D::new(-0.2, 0.0, 1.0),
+                origin: Point3::new(0.2, 0.0, -1.0),
+                direction: Vector3::new(-0.2, 0.0, 1.0),
                 vop: glass,
                 abs: [0.0; 3],
             };
             let intersection = plane.geometry().intersection(&original_ray).unwrap();
             let mut ray = original_ray.clone();
-            ray.bounce_unchecked(&plane, &Point3D::new(0.0, 0.0, 0.0));
+            ray.bounce_unchecked(&plane, &Point3::origin());
 
             // calculate via snell's law
-            let normal = plane
-                .geometry()
-                .normal_at(&ray.origin)
-                .unwrap()
-                .normalized();
-            let theta_i = normal.dot(&(original_ray.direction).normalized()).acos();
-            let theta_t = normal.dot(&ray.direction.normalized());
+            let normal = plane.geometry().normal_at(&ray.origin).unwrap().normalize();
+            let theta_i = normal.dot(&(original_ray.direction).normalize()).acos();
+            let theta_t = normal.dot(&ray.direction.normalize());
             assert!(
                 plane.vop_below_at(&intersection).ior * theta_i.sin()
                     - plane.vop_above_at(&intersection).ior * theta_t.sin()
@@ -339,16 +327,16 @@ mod tests {
             let air = air();
             let sphere = reflective_plane(air.clone());
             let mut ray = Ray {
-                origin: Point3D::new(1.0, 0.0, 1.0),
-                direction: Vector3D::new(-1.0, 0.0, -1.0),
+                origin: Point3::new(1.0, 0.0, 1.0),
+                direction: Vector3::new(-1.0, 0.0, -1.0),
                 vop: air,
                 abs: [0.0; 3],
             };
-            ray.bounce_unchecked(&sphere, &Point3D::new(0.0, 0.0, 0.0));
-            assert_eq!(ray.origin, Point3D::new(0.0, 0.0, 0.0));
+            ray.bounce_unchecked(&sphere, &Point3::origin());
+            assert_eq!(ray.origin, Point3::origin());
             assert!(
-                (ray.direction.normalized() - Vector3D::new(-1.0, 0.0, 1.0).normalized())
-                    .length_squared()
+                (ray.direction.normalize() - Vector3::new(-1.0, 0.0, 1.0).normalize())
+                    .norm_squared()
                     <= TOLERANCE
             );
         }
@@ -364,8 +352,8 @@ mod tests {
 
         fn downwards_ray(vop: Arc<VOP>) -> Ray {
             Ray {
-                origin: Point3D::new(0.0, 0.0, 10.0),
-                direction: Vector3D::new(0.0, 0.0, -1.0),
+                origin: Point3::new(0.0, 0.0, 10.0),
+                direction: Vector3::new(0.0, 0.0, -1.0),
                 vop,
                 abs: [0.0; 3],
             }
@@ -374,8 +362,8 @@ mod tests {
         fn light_plane(vop: Arc<VOP>) -> Plane {
             Plane {
                 geometry: InfinitePlaneShape {
-                    origin: Point3D::new(0.0, 0.0, 0.0),
-                    normal: Vector3D::new(0.0, 0.0, 1.0),
+                    origin: Point3::origin(),
+                    normal: Vector3::new(0.0, 0.0, 1.0),
                 },
                 sop: SOP::Light(255, 255, 255),
                 vop_above: vop.clone(),
@@ -386,8 +374,8 @@ mod tests {
         fn dark_plane(vop: Arc<VOP>) -> Plane {
             Plane {
                 geometry: InfinitePlaneShape {
-                    origin: Point3D::new(0.0, 0.0, 0.0),
-                    normal: Vector3D::new(0.0, 0.0, 1.0),
+                    origin: Point3::origin(),
+                    normal: Vector3::new(0.0, 0.0, 1.0),
                 },
                 sop: SOP::Dark,
                 vop_above: vop.clone(),

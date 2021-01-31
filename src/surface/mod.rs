@@ -6,7 +6,8 @@ pub mod sphere;
 pub mod zparaboloid;
 
 use {
-    crate::{Point3D, Shape, VOP},
+    crate::{Shape, VOP},
+    nalgebra::Point3,
     serde::Deserialize,
     std::collections::HashMap,
     std::sync::Arc,
@@ -31,11 +32,11 @@ pub enum SOP {
 pub trait Surface {
     fn geometry(&self) -> &dyn Shape;
 
-    fn vop_above_at(&self, point: &Point3D) -> Arc<VOP>;
+    fn vop_above_at(&self, point: &Point3<f64>) -> Arc<VOP>;
 
-    fn vop_below_at(&self, point: &Point3D) -> Arc<VOP>;
+    fn vop_below_at(&self, point: &Point3<f64>) -> Arc<VOP>;
 
-    fn sop_at(&self, point: &Point3D) -> SOP;
+    fn sop_at(&self, point: &Point3<f64>) -> SOP;
 }
 
 pub trait SurfaceBuilder {

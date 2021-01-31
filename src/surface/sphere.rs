@@ -1,7 +1,8 @@
 use {
     super::{Surface, SurfaceBuilder},
-    crate::{shape::SphereShape, Point3D, Shape, SOP, VOP},
+    crate::{shape::SphereShape, Shape, SOP, VOP},
     collections::HashMap,
+    nalgebra::Point3,
     serde::Deserialize,
     std::collections,
     std::sync::Arc,
@@ -27,13 +28,13 @@ impl Surface for Sphere {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _point: &Point3D) -> Arc<VOP> {
+    fn vop_above_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
         self.vop_above.clone()
     }
-    fn vop_below_at(&self, _point: &Point3D) -> Arc<VOP> {
+    fn vop_below_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
         self.vop_below.clone()
     }
-    fn sop_at(&self, _point: &Point3D) -> SOP {
+    fn sop_at(&self, _point: &Point3<f64>) -> SOP {
         self.sop
     }
 }
@@ -42,11 +43,7 @@ impl SurfaceBuilder for SphereBuilder {
     fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(Sphere {
             geometry: SphereShape {
-                center: Point3D {
-                    x: self.center[0],
-                    y: self.center[1],
-                    z: self.center[2],
-                },
+                center: Point3::from_slice(&self.center),
                 radius: self.radius,
             },
             sop: self.sop,

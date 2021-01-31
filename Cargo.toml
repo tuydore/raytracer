@@ -11,6 +11,7 @@ rayon = "1.5"
 num_cpus = "1.13"
 num-complex = "0.3"
 scarlet = "1.1"
+nalgebra = "0.24"
 
 [dependencies.serde]
 version = "1.0"

@@ -1,15 +1,18 @@
-use super::{plane_contains_point, plane_intersects_ray, Shape};
-use crate::{ray::Ray, Point3D, Vector3D};
+use {
+    super::{plane_contains_point, plane_intersects_ray, Shape},
+    crate::ray::Ray,
+    nalgebra::{Point3, Vector3},
+};
 
 pub struct RectangleShape {
-    pub origin: Point3D,
-    pub normal: Vector3D,
-    pub orientation: Vector3D,
+    pub origin: Point3<f64>,
+    pub normal: Vector3<f64>,
+    pub orientation: Vector3<f64>,
     pub size: [f64; 2], // orientation is along 1st size dimension
 }
 
 impl Shape for RectangleShape {
-    fn intersection(&self, ray: &Ray) -> Option<Point3D> {
+    fn intersection(&self, ray: &Ray) -> Option<Point3<f64>> {
         if let Some(p) = plane_intersects_ray(&self.origin, &self.normal, ray) {
             if self.contains(&p) {
                 return Some(p);
@@ -17,14 +20,14 @@ impl Shape for RectangleShape {
         }
         None
     }
-    fn normal_at(&self, point: &Point3D) -> Option<Vector3D> {
+    fn normal_at(&self, point: &Point3<f64>) -> Option<Vector3<f64>> {
         if self.contains(point) {
             Some(self.normal)
         } else {
             None
         }
     }
-    fn contains(&self, point: &Point3D) -> bool {
+    fn contains(&self, point: &Point3<f64>) -> bool {
         // check if point is on plane
         if !plane_contains_point(&self.origin, &self.normal, point) {
             return false;
@@ -36,7 +39,7 @@ impl Shape for RectangleShape {
         let l1 = from_origin.dot(&self.normal.cross(&self.orientation)).abs();
         l0 <= self.size[0] / 2.0 && l1 <= self.size[1] / 2.0
     }
-    fn origin(&self) -> Point3D {
+    fn origin(&self) -> Point3<f64> {
         self.origin
     }
 }
@@ -49,9 +52,9 @@ mod tests {
 
     fn xy_square() -> RectangleShape {
         RectangleShape {
-            origin: Point3D::new(0.0, 0.0, 0.0),
-            normal: Vector3D::new(0.0, 0.0, 1.0),
-            orientation: Vector3D::new(0.0, 1.0, 0.0),
+            origin: Point3::new(0.0, 0.0, 0.0),
+            normal: Vector3::new(0.0, 0.0, 1.0),
+            orientation: Vector3::new(0.0, 1.0, 0.0),
             size: [2.0, 2.0],
         }
     }
@@ -64,13 +67,13 @@ mod tests {
             abs: [0.0; 3],
         });
         let ray = Ray {
-            origin: Point3D::new(0.0, 0.0, 1.0),
-            direction: Vector3D::new(0.0, 1.0, -1.0),
+            origin: Point3::new(0.0, 0.0, 1.0),
+            direction: Vector3::new(0.0, 1.0, -1.0),
             vop: air,
             abs: [0.0; 3],
         };
         assert!(square.intersects(&ray));
-        assert_eq!(square.intersection(&ray), Some(Point3D::new(0.0, 1.0, 0.0)));
+        assert_eq!(square.intersection(&ray), Some(Point3::new(0.0, 1.0, 0.0)));
     }
 
     #[test]
@@ -81,8 +84,8 @@ mod tests {
             abs: [0.0; 3],
         });
         let ray = Ray {
-            origin: Point3D::new(0.0, 0.0, 1.0),
-            direction: Vector3D::new(0.0, 3.0, -1.0),
+            origin: Point3::new(0.0, 0.0, 1.0),
+            direction: Vector3::new(0.0, 3.0, -1.0),
             vop: air,
             abs: [0.0; 3],
         };
@@ -98,8 +101,8 @@ mod tests {
             abs: [0.0; 3],
         });
         let ray = Ray {
-            origin: Point3D::new(0.0, 0.0, 1.0),
-            direction: Vector3D::new(1.0, 0.0, 0.0),
+            origin: Point3::new(0.0, 0.0, 1.0),
+            direction: Vector3::new(1.0, 0.0, 0.0),
             vop: air,
             abs: [0.0; 3],
         };

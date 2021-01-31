@@ -1,7 +1,8 @@
 use {
     super::{Surface, SurfaceBuilder},
-    crate::{shape::ParaboloidShape, Point3D, Shape, SOP, VOP},
+    crate::{shape::ParaboloidShape, Shape, SOP, VOP},
     collections::HashMap,
+    nalgebra::Point3,
     serde::Deserialize,
     std::collections,
     std::sync::Arc,
@@ -29,15 +30,15 @@ impl Surface for ZParaboloid {
         &self.geometry
     }
 
-    fn vop_above_at(&self, _: &Point3D) -> Arc<VOP> {
+    fn vop_above_at(&self, _: &Point3<f64>) -> Arc<VOP> {
         self.vop_above.clone()
     }
 
-    fn vop_below_at(&self, _: &Point3D) -> Arc<VOP> {
+    fn vop_below_at(&self, _: &Point3<f64>) -> Arc<VOP> {
         self.vop_below.clone()
     }
 
-    fn sop_at(&self, _: &Point3D) -> SOP {
+    fn sop_at(&self, _: &Point3<f64>) -> SOP {
         self.sop
     }
 }

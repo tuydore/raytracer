@@ -1,7 +1,8 @@
 use {
     super::{Surface, SurfaceBuilder},
-    crate::{shape::InfinitePlaneShape, Point3D, Shape, Vector3D, SOP, VOP},
+    crate::{shape::InfinitePlaneShape, Shape, SOP, VOP},
     collections::HashMap,
+    nalgebra::{Point3, Vector3},
     serde::Deserialize,
     std::collections,
     std::sync::Arc,
@@ -10,7 +11,7 @@ use {
 pub struct Checkerboard {
     geometry: InfinitePlaneShape,
     sop: SOP,
-    orientation: Vector3D,
+    orientation: Vector3<f64>,
     tile_size: f64,
     vop_above: Arc<VOP>,
     vop_below: Arc<VOP>,
@@ -31,20 +32,20 @@ impl Surface for Checkerboard {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _: &Point3D) -> Arc<VOP> {
+    fn vop_above_at(&self, _: &Point3<f64>) -> Arc<VOP> {
         self.vop_above.clone()
     }
-    fn vop_below_at(&self, _: &Point3D) -> Arc<VOP> {
+    fn vop_below_at(&self, _: &Point3<f64>) -> Arc<VOP> {
         self.vop_below.clone()
     }
-    fn sop_at(&self, point: &Point3D) -> SOP {
+    fn sop_at(&self, point: &Point3<f64>) -> SOP {
         let y = self
             .geometry
             .normal_at(point)
             .unwrap()
             .cross(&self.orientation)
-            .normalized();
-        let x = self.orientation.normalized(); // TODO: should be by default
+            .normalize();
+        let x = self.orientation.normalize(); // TODO: should be by default
         let from_origin = *point - self.geometry().origin();
 
         let size_x = from_origin.dot(&x) / self.tile_size;
@@ -61,22 +62,10 @@ impl SurfaceBuilder for CheckerboardBuilder {
     fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(Checkerboard {
             geometry: InfinitePlaneShape {
-                origin: Point3D {
-                    x: self.origin[0],
-                    y: self.origin[1],
-                    z: self.origin[2],
-                },
-                normal: Vector3D {
-                    x: self.normal[0],
-                    y: self.normal[1],
-                    z: self.normal[2],
-                },
+                origin: Point3::from_slice(&self.origin),
+                normal: Vector3::from_row_slice(&self.normal),
             },
-            orientation: Vector3D {
-                x: self.orientation[0],
-                y: self.orientation[1],
-                z: self.orientation[2],
-            },
+            orientation: Vector3::from_row_slice(&self.orientation),
             sop: self.sop,
             tile_size: self.tile_size,
             vop_above: vop_map

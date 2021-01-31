@@ -1,7 +1,8 @@
 use {
     super::{Surface, SurfaceBuilder},
-    crate::{shape::InfinitePlaneShape, Point3D, Shape, Vector3D, SOP, VOP},
+    crate::{shape::InfinitePlaneShape, Shape, SOP, VOP},
     collections::HashMap,
+    nalgebra::{Point3, Vector3},
     serde::Deserialize,
     std::collections,
     std::sync::Arc,
@@ -27,16 +28,8 @@ impl SurfaceBuilder for PlaneBuilder {
     fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(Plane {
             geometry: InfinitePlaneShape {
-                origin: Point3D {
-                    x: self.origin[0],
-                    y: self.origin[1],
-                    z: self.origin[2],
-                },
-                normal: Vector3D {
-                    x: self.normal[0],
-                    y: self.normal[1],
-                    z: self.normal[2],
-                },
+                origin: Point3::from_slice(&self.origin),
+                normal: Vector3::from_row_slice(&self.normal),
             },
             sop: self.sop,
             vop_above: vop_map
@@ -55,13 +48,13 @@ impl Surface for Plane {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _: &Point3D) -> Arc<VOP> {
+    fn vop_above_at(&self, _: &Point3<f64>) -> Arc<VOP> {
         self.vop_above.clone()
     }
-    fn vop_below_at(&self, _: &Point3D) -> Arc<VOP> {
+    fn vop_below_at(&self, _: &Point3<f64>) -> Arc<VOP> {
         self.vop_below.clone()
     }
-    fn sop_at(&self, _: &Point3D) -> SOP {
+    fn sop_at(&self, _: &Point3<f64>) -> SOP {
         self.sop
     }
 }

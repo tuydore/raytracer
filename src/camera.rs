@@ -1,6 +1,7 @@
 use {
-    crate::{ray::BounceResult, Point3D, Ray, Surface, Vector3D, VOP},
+    crate::{ray::BounceResult, Ray, Surface, VOP},
     image::{Rgb, RgbImage},
+    nalgebra::{Point3, Vector3},
     rayon::prelude::*,
     serde::Deserialize,
     std::collections::HashMap,
@@ -11,9 +12,9 @@ use {
 
 #[derive(Debug)]
 pub struct Camera {
-    origin: Point3D,
-    gaze: Vector3D,
-    up: Vector3D,
+    origin: Point3<f64>,
+    gaze: Vector3<f64>,
+    up: Vector3<f64>,
     fov: [f64; 2],
     density: f64,
     vop: Arc<VOP>,
@@ -32,21 +33,9 @@ pub struct CameraBuilder {
 impl CameraBuilder {
     pub fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Camera {
         Camera {
-            origin: Point3D {
-                x: self.origin[0],
-                y: self.origin[1],
-                z: self.origin[2],
-            },
-            gaze: Vector3D {
-                x: self.gaze[0],
-                y: self.gaze[1],
-                z: self.gaze[2],
-            },
-            up: Vector3D {
-                x: self.up[0],
-                y: self.up[1],
-                z: self.up[2],
-            },
+            origin: Point3::from_slice(&self.origin),
+            gaze: Vector3::from_row_slice(&self.origin),
+            up: Vector3::from_row_slice(&self.origin),
             fov: self.fov,
             density: self.density,
             vop: vop_map
@@ -76,17 +65,17 @@ impl Camera {
         )
     }
 
-    fn screen_upper_left_corner(&self) -> Point3D {
+    fn screen_upper_left_corner(&self) -> Point3<f64> {
         let (sizex, sizey) = self.screen_size();
-        let g = self.gaze.normalized();
-        let u = self.up.normalized();
+        let g = self.gaze.normalize();
+        let u = self.up.normalize();
         self.origin + g + u * sizex / 2.0 + u.cross(&g) * sizey / 2.0
     }
 
-    fn pixel_centers(&self) -> Vec<Point3D> {
+    fn pixel_centers(&self) -> Vec<Point3<f64>> {
         // orientation vectors r==right, d==down
-        let g = self.gaze.normalized();
-        let u = self.up.normalized();
+        let g = self.gaze.normalize();
+        let u = self.up.normalize();
         let r = g.cross(&u);
         let d = -1.0 * u;
 
@@ -195,9 +184,9 @@ mod tests {
 
     fn camera(vop: Arc<VOP>) -> Camera {
         Camera {
-            origin: Point3D::new(0.0, 0.0, 0.0),
-            gaze: Vector3D::new(0.0, 1.0, 0.0),
-            up: Vector3D::new(0.0, 0.0, 1.0),
+            origin: Point3::new(0.0, 0.0, 0.0),
+            gaze: Vector3::new(0.0, 1.0, 0.0),
+            up: Vector3::new(0.0, 0.0, 1.0),
             fov: [20.0, 30.0],
             density: 1.0,
             vop,
@@ -232,15 +221,15 @@ mod tests {
             abs: [0.0, 0.0, 0.0],
         };
         let camera = Camera {
-            origin: Point3D::new(0.0, 0.0, 0.0),
-            gaze: Vector3D::py(),
-            up: Vector3D::pz(),
+            origin: Point3::new(0.0, 0.0, 0.0),
+            gaze: Vector3::y(),
+            up: Vector3::z(),
             fov: [1.0, 1.0],
             density: 1.0,
             vop: Arc::new(air),
         };
         let centers = camera.pixel_centers();
         assert_eq!(centers.len(), 1);
-        assert_eq!(centers[0], Point3D::new(0.0, 1.0, 0.0));
+        assert_eq!(centers[0], Point3::new(0.0, 1.0, 0.0));
     }
 }

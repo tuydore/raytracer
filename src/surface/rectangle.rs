@@ -1,7 +1,8 @@
 use {
     super::{Surface, SurfaceBuilder},
-    crate::{shape::RectangleShape, Point3D, Shape, Vector3D, SOP, VOP},
+    crate::{shape::RectangleShape, Shape, SOP, VOP},
     collections::HashMap,
+    nalgebra::{Point3, Vector3},
     serde::Deserialize,
     std::collections,
     std::sync::Arc,
@@ -29,13 +30,13 @@ impl Surface for Rectangle {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _point: &Point3D) -> Arc<VOP> {
+    fn vop_above_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
         self.vop_above.clone()
     }
-    fn vop_below_at(&self, _point: &Point3D) -> Arc<VOP> {
+    fn vop_below_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
         self.vop_below.clone()
     }
-    fn sop_at(&self, _point: &Point3D) -> SOP {
+    fn sop_at(&self, _point: &Point3<f64>) -> SOP {
         self.sop
     }
 }
@@ -44,21 +45,9 @@ impl SurfaceBuilder for RectangleBuilder {
     fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(Rectangle {
             geometry: RectangleShape {
-                origin: Point3D {
-                    x: self.origin[0],
-                    y: self.origin[1],
-                    z: self.origin[2],
-                },
-                normal: Vector3D {
-                    x: self.normal[0],
-                    y: self.normal[1],
-                    z: self.normal[2],
-                },
-                orientation: Vector3D {
-                    x: self.orientation[0],
-                    y: self.orientation[1],
-                    z: self.orientation[2],
-                },
+                origin: Point3::from_slice(&self.origin),
+                normal: Vector3::from_row_slice(&self.normal),
+                orientation: Vector3::from_row_slice(&self.orientation),
                 size: self.size,
             },
             sop: self.sop,

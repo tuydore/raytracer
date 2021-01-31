@@ -1,7 +1,8 @@
 use {
     super::{Surface, SurfaceBuilder},
-    crate::{shape::InfinitePlaneShape, Point3D, Shape, Vector3D, SOP, VOP},
+    crate::{shape::InfinitePlaneShape, Shape, SOP, VOP},
     collections::HashMap,
+    nalgebra::{Point3, Vector3},
     num_complex::Complex,
     scarlet::colormap::ListedColorMap,
     serde::Deserialize,
@@ -11,7 +12,7 @@ use {
 
 pub struct MandelbrotPlane {
     pub geometry: InfinitePlaneShape,
-    pub orientation: Vector3D,
+    pub orientation: Vector3<f64>,
     pub vop_above: Arc<VOP>,
     pub vop_below: Arc<VOP>,
     pub colormap: Vec<[f64; 3]>,
@@ -63,22 +64,10 @@ impl SurfaceBuilder for MandelbrotPlaneBuilder {
     fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(MandelbrotPlane {
             geometry: InfinitePlaneShape {
-                origin: Point3D {
-                    x: self.origin[0],
-                    y: self.origin[1],
-                    z: self.origin[2],
-                },
-                normal: Vector3D {
-                    x: self.normal[0],
-                    y: self.normal[1],
-                    z: self.normal[2],
-                },
+                origin: Point3::from_slice(&self.origin),
+                normal: Vector3::from_row_slice(&self.normal),
             },
-            orientation: Vector3D {
-                x: self.orientation[0],
-                y: self.orientation[1],
-                z: self.orientation[2],
-            },
+            orientation: Vector3::from_row_slice(&self.orientation),
             colormap: match self.colormap.as_str() {
                 "viridis" => ListedColorMap::viridis().vals,
                 "magma" => ListedColorMap::magma().vals,
@@ -105,22 +94,22 @@ impl Surface for MandelbrotPlane {
     fn geometry(&self) -> &dyn Shape {
         &self.geometry
     }
-    fn vop_above_at(&self, _: &Point3D) -> Arc<VOP> {
+    fn vop_above_at(&self, _: &Point3<f64>) -> Arc<VOP> {
         self.vop_above.clone()
     }
-    fn vop_below_at(&self, _: &Point3D) -> Arc<VOP> {
+    fn vop_below_at(&self, _: &Point3<f64>) -> Arc<VOP> {
         self.vop_below.clone()
     }
-    fn sop_at(&self, point: &Point3D) -> SOP {
+    fn sop_at(&self, point: &Point3<f64>) -> SOP {
         // intersection with plane
-        let y = self
+        let y: Vector3<f64> = self
             .geometry
             .normal_at(point)
             .unwrap()
             .cross(&self.orientation)
-            .normalized();
-        let x = self.orientation.normalized(); // TODO: should be by default
-        let from_origin = *point - self.geometry().origin();
+            .normalize();
+        let x: Vector3<f64> = self.orientation.normalize(); // TODO: should be by default
+        let from_origin: Vector3<f64> = *point - self.geometry().origin();
 
         let xproj = from_origin.dot(&x);
         let yproj = from_origin.dot(&y);

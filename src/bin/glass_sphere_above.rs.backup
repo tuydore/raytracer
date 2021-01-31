@@ -1,13 +1,13 @@
-use raytracer::{Camera, Checkerboard, Point3D, Sphere, Surface, Vector3D, SOP, VOP};
+use raytracer::{Camera, Checkerboard, Point3<f64>, Sphere, Surface, Vector3<f64>, SOP, VOP};
 
 fn main() {
     let air = VOP::new(1.0);
     let glass = VOP::new(1.5);
 
     let checkerboard = Checkerboard::new(
-        Point3D::new(0.0, 0.0, 0.0),
-        Vector3D::pz(),
-        Vector3D::py(),
+        Point3<f64>::new(0.0, 0.0, 0.0),
+        Vector3<f64>::pz(),
+        Vector3<f64>::py(),
         (255, 255, 255),
         2.0,
         &air,
@@ -18,7 +18,7 @@ fn main() {
     let mut spheres = Vec::new();
 
     spheres.push(Sphere::new(
-        Point3D::new(6.0, 6.0, 2.0),
+        Point3<f64>::new(6.0, 6.0, 2.0),
         2.0,
         SOP::Refract,
         &air,
@@ -26,7 +26,7 @@ fn main() {
     ));
 
     spheres.push(Sphere::new(
-        Point3D::new(0.0, 0.0, 2.0),
+        Point3<f64>::new(0.0, 0.0, 2.0),
         2.0,
         SOP::Light(94, 39, 80),
         &air,
@@ -35,7 +35,7 @@ fn main() {
 
     for (x, y) in [(0.0, 6.0), (6.0, 0.0)].iter() {
         spheres.push(Sphere::new(
-            Point3D::new(*x, *y, 2.0),
+            Point3<f64>::new(*x, *y, 2.0),
             2.0,
             SOP::Reflect,
             &air,
@@ -43,11 +43,11 @@ fn main() {
         ))
     }
 
-    let g = Vector3D::new(-1.0, -1.0, -0.5);
+    let g = Vector3<f64>::new(-1.0, -1.0, -0.5);
     let camera = Camera::new(
-        Point3D::new(30.0, 30.0, 15.0),
+        Point3<f64>::new(30.0, 30.0, 15.0),
         g,
-        g.cross(&Vector3D::new(1.0, -1.0, 0.0)),
+        g.cross(&Vector3<f64>::new(1.0, -1.0, 0.0)),
         (18.0, 32.0),
         200.0,
         &air,

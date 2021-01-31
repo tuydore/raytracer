@@ -6,7 +6,6 @@ pub mod surface;
 pub mod vop;
 
 pub use {
-    basics::{Point3D, Vector3D},
     camera::Camera,
     ray::{BounceResult, Ray},
     shape::Shape,
