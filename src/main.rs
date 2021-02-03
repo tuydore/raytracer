@@ -4,7 +4,7 @@ use {
         camera::CameraBuilder,
         surface::{
             CheckerboardBuilder, MandelbrotPlaneBuilder, PlaneBuilder, RectangleBuilder,
-            SphereBuilder, SurfaceBuilder, ZParaboloidBuilder,
+            SphereBuilder, SurfaceBuilder, TexturedRectangleBuilder, ZParaboloidBuilder,
         },
         Camera, Surface, VOP,
     },
@@ -97,6 +97,9 @@ fn extract_surfaces(
                 .build(vop_map),
             "rectangle" => from_value::<RectangleBuilder>(s.to_owned())
                 .expect("Error parsing rectangle.")
+                .build(vop_map),
+            "texturedrectangle" => from_value::<TexturedRectangleBuilder>(s.to_owned())
+                .expect("Error parsing textured rectangle.")
                 .build(vop_map),
             "plane" => from_value::<PlaneBuilder>(s.to_owned())
                 .expect("Error parsing plane.")
