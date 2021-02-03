@@ -2,7 +2,7 @@ use {
     super::{Surface, SurfaceBuilder},
     crate::{shape::InfinitePlaneShape, Shape, SOP, VOP},
     collections::HashMap,
-    nalgebra::{Point3, Vector3},
+    nalgebra::{Point3, Unit, Vector3},
     serde::Deserialize,
     std::collections,
     std::sync::Arc,
@@ -11,7 +11,7 @@ use {
 pub struct Checkerboard {
     geometry: InfinitePlaneShape,
     sop: SOP,
-    orientation: Vector3<f64>,
+    orientation: Unit<Vector3<f64>>,
     tile_size: f64,
     vop_above: Arc<VOP>,
     vop_below: Arc<VOP>,
@@ -63,9 +63,9 @@ impl SurfaceBuilder for CheckerboardBuilder {
         Arc::new(Checkerboard {
             geometry: InfinitePlaneShape {
                 origin: Point3::from_slice(&self.origin),
-                normal: Vector3::from_row_slice(&self.normal),
+                normal: Unit::new_normalize(Vector3::from_row_slice(&self.normal)),
             },
-            orientation: Vector3::from_row_slice(&self.orientation),
+            orientation: Unit::new_normalize(Vector3::from_row_slice(&self.orientation)),
             sop: self.sop,
             tile_size: self.tile_size,
             vop_above: vop_map

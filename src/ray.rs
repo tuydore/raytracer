@@ -1,6 +1,6 @@
 use {
     crate::{Surface, SOP, VOP},
-    nalgebra::{Point3, Vector3},
+    nalgebra::{Point3, Unit, Vector3},
     std::{error::Error, sync::Arc},
 };
 
@@ -62,7 +62,7 @@ impl Ray {
         &self,
         surface: &dyn Surface,
         point: &Point3<f64>,
-    ) -> Result<(Vector3<f64>, Arc<VOP>, Arc<VOP>), Box<dyn Error>> {
+    ) -> Result<(Unit<Vector3<f64>>, Arc<VOP>, Arc<VOP>), Box<dyn Error>> {
         // get VOPs above and below
         let vop_above = surface.vop_above_at(&point);
         let vop_below = surface.vop_below_at(&point);
@@ -99,7 +99,11 @@ impl Ray {
                     normal,
                 )
             }
-            Ok((-1.0 * normal, vop_below, vop_above))
+            Ok((
+                Unit::new_normalize(-1.0 * normal.into_inner()),
+                vop_below,
+                vop_above,
+            ))
         }
     }
 
@@ -224,7 +228,7 @@ mod tests {
         Plane {
             geometry: InfinitePlaneShape {
                 origin: Point3::origin(),
-                normal: Vector3::z(),
+                normal: Unit::new_normalize(Vector3::z()),
             },
             sop: SOP::Reflect,
             vop_above: air.clone(),
@@ -244,7 +248,7 @@ mod tests {
             Plane {
                 geometry: InfinitePlaneShape {
                     origin: Point3::origin(),
-                    normal: Vector3::z(),
+                    normal: Unit::new_normalize(Vector3::z()),
                 },
                 sop: SOP::Refract,
                 vop_above: air,
@@ -363,7 +367,7 @@ mod tests {
             Plane {
                 geometry: InfinitePlaneShape {
                     origin: Point3::origin(),
-                    normal: Vector3::new(0.0, 0.0, 1.0),
+                    normal: Unit::new_normalize(Vector3::new(0.0, 0.0, 1.0)),
                 },
                 sop: SOP::Light(255, 255, 255),
                 vop_above: vop.clone(),
@@ -375,7 +379,7 @@ mod tests {
             Plane {
                 geometry: InfinitePlaneShape {
                     origin: Point3::origin(),
-                    normal: Vector3::new(0.0, 0.0, 1.0),
+                    normal: Unit::new_normalize(Vector3::new(0.0, 0.0, 1.0)),
                 },
                 sop: SOP::Dark,
                 vop_above: vop.clone(),

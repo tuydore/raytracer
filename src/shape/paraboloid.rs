@@ -1,7 +1,7 @@
 use {
     super::pick_closest_intersection,
     crate::{Ray, Shape, TOLERANCE},
-    nalgebra::{Point3, Vector3},
+    nalgebra::{Point3, Unit, Vector3},
 };
 // TODO: check asq and bsq are > 0
 pub struct ParaboloidShape {
@@ -72,11 +72,11 @@ impl Shape for ParaboloidShape {
         pick_closest_intersection(self.line_intersection(&ray.origin, &ray.direction), ray)
     }
 
-    fn normal_at(&self, point: &Point3<f64>) -> Option<Vector3<f64>> {
+    fn normal_at(&self, point: &Point3<f64>) -> Option<Unit<Vector3<f64>>> {
         if self.contains(point) {
             let rx = Vector3::new(1.0, 0.0, 2.0 * (point.x - self.x0) / self.asq);
             let ry = Vector3::new(0.0, 1.0, 2.0 * (point.y - self.y0) / self.bsq);
-            Some(rx.cross(&ry))
+            Some(Unit::new_normalize(rx.cross(&ry)))
         } else {
             None
         }
@@ -107,7 +107,10 @@ mod tests {
         assert!(p.contains(&Point3::new(-1.0, 1.0, 2.0)));
         assert!(p.contains(&Point3::new(1.0, -1.0, 2.0)));
         assert!(p.contains(&Point3::new(-1.0, -1.0, 2.0)));
-        assert_eq!(p.normal_at(&Point3::new(0.0, 0.0, 0.0)), Some(Vector3::z()));
+        assert_eq!(
+            p.normal_at(&Point3::new(0.0, 0.0, 0.0)),
+            Some(Unit::new_normalize(Vector3::z()))
+        );
     }
 
     #[test]
