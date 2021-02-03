@@ -86,10 +86,12 @@ pub fn pick_closest_intersection(
         .filter(|(_, d2)| *d2 >= TOLERANCE)
         .collect();
 
-    if enumerated_dsq.is_empty() {
-        return None;
+    match enumerated_dsq.len() {
+        0 => None,
+        1 => Some(line_intersections[enumerated_dsq[0].0]),
+        _ => {
+            enumerated_dsq.sort_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap());
+            Some(line_intersections[enumerated_dsq[0].0])
+        }
     }
-
-    enumerated_dsq.sort_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap());
-    Some(line_intersections[enumerated_dsq[0].0])
 }
