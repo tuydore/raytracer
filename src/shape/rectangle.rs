@@ -1,13 +1,13 @@
 use {
     super::{plane_contains_point, plane_intersects_ray, Shape},
     crate::ray::Ray,
-    nalgebra::{Point3, Vector3},
+    nalgebra::{Point3, Unit, Vector3},
 };
 
 pub struct RectangleShape {
     pub origin: Point3<f64>,
-    pub normal: Vector3<f64>,
-    pub orientation: Vector3<f64>,
+    pub normal: Unit<Vector3<f64>>,
+    pub orientation: Unit<Vector3<f64>>,
     pub size: [f64; 2], // orientation is along 1st size dimension
 }
 
@@ -20,7 +20,7 @@ impl Shape for RectangleShape {
         }
         None
     }
-    fn normal_at(&self, point: &Point3<f64>) -> Option<Vector3<f64>> {
+    fn normal_at(&self, point: &Point3<f64>) -> Option<Unit<Vector3<f64>>> {
         if self.contains(point) {
             Some(self.normal)
         } else {
@@ -53,8 +53,8 @@ mod tests {
     fn xy_square() -> RectangleShape {
         RectangleShape {
             origin: Point3::new(0.0, 0.0, 0.0),
-            normal: Vector3::new(0.0, 0.0, 1.0),
-            orientation: Vector3::new(0.0, 1.0, 0.0),
+            normal: Unit::new_normalize(Vector3::new(0.0, 0.0, 1.0)),
+            orientation: Unit::new_normalize(Vector3::new(0.0, 1.0, 0.0)),
             size: [2.0, 2.0],
         }
     }

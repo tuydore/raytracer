@@ -6,7 +6,7 @@ mod sphere;
 use crate::{Ray, TOLERANCE};
 pub use {
     infiniteplane::InfinitePlaneShape,
-    nalgebra::{Point3, Vector3},
+    nalgebra::{Point3, Unit, Vector3},
     paraboloid::ParaboloidShape,
     rectangle::RectangleShape,
     sphere::SphereShape,
@@ -14,7 +14,7 @@ pub use {
 
 pub trait Shape {
     fn intersection(&self, ray: &Ray) -> Option<Point3<f64>>;
-    fn normal_at(&self, point: &Point3<f64>) -> Option<Vector3<f64>>;
+    fn normal_at(&self, point: &Point3<f64>) -> Option<Unit<Vector3<f64>>>;
     fn contains(&self, point: &Point3<f64>) -> bool;
     fn intersects(&self, ray: &Ray) -> bool {
         self.intersection(ray).is_some()
@@ -24,7 +24,7 @@ pub trait Shape {
 
 pub fn plane_intersects_line(
     plane_origin: &Point3<f64>,
-    plane_normal: &Vector3<f64>,
+    plane_normal: &Unit<Vector3<f64>>,
     line_origin: &Point3<f64>,
     line_direction: &Vector3<f64>,
 ) -> Option<Point3<f64>> {
@@ -42,7 +42,7 @@ pub fn plane_intersects_line(
 
 pub fn plane_contains_point(
     plane_origin: &Point3<f64>,
-    plane_normal: &Vector3<f64>,
+    plane_normal: &Unit<Vector3<f64>>,
     point: &Point3<f64>,
 ) -> bool {
     plane_normal.dot(&(*plane_origin - *point)).abs() <= TOLERANCE
@@ -50,7 +50,7 @@ pub fn plane_contains_point(
 
 pub fn plane_intersects_ray(
     plane_origin: &Point3<f64>,
-    plane_normal: &Vector3<f64>,
+    plane_normal: &Unit<Vector3<f64>>,
     ray: &Ray,
 ) -> Option<Point3<f64>> {
     // if the line of the ray intersects the plane

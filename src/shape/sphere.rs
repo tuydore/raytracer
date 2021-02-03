@@ -1,7 +1,7 @@
 use {
     super::{pick_closest_intersection, Shape},
     crate::{Ray, TOLERANCE},
-    nalgebra::{Point3, Vector3},
+    nalgebra::{Point3, Unit, Vector3},
 };
 
 pub struct SphereShape {
@@ -61,9 +61,9 @@ impl Shape for SphereShape {
         ((self.center - *point).norm() - self.radius).abs() <= TOLERANCE
     }
 
-    fn normal_at(&self, point: &Point3<f64>) -> Option<Vector3<f64>> {
+    fn normal_at(&self, point: &Point3<f64>) -> Option<Unit<Vector3<f64>>> {
         if self.contains(point) {
-            Some(*point - self.center)
+            Some(Unit::new_normalize(*point - self.center))
         } else {
             None
         }

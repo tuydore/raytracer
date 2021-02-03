@@ -2,7 +2,7 @@ use {
     super::{Surface, SurfaceBuilder},
     crate::{shape::InfinitePlaneShape, Shape, SOP, VOP},
     collections::HashMap,
-    nalgebra::{Point3, Vector3},
+    nalgebra::{Point3, Unit, Vector3},
     num_complex::Complex,
     scarlet::colormap::ListedColorMap,
     serde::Deserialize,
@@ -12,7 +12,7 @@ use {
 
 pub struct MandelbrotPlane {
     pub geometry: InfinitePlaneShape,
-    pub orientation: Vector3<f64>,
+    pub orientation: Unit<Vector3<f64>>,
     pub vop_above: Arc<VOP>,
     pub vop_below: Arc<VOP>,
     pub colormap: Vec<[f64; 3]>,
@@ -65,9 +65,9 @@ impl SurfaceBuilder for MandelbrotPlaneBuilder {
         Arc::new(MandelbrotPlane {
             geometry: InfinitePlaneShape {
                 origin: Point3::from_slice(&self.origin),
-                normal: Vector3::from_row_slice(&self.normal),
+                normal: Unit::new_normalize(Vector3::from_row_slice(&self.normal)),
             },
-            orientation: Vector3::from_row_slice(&self.orientation),
+            orientation: Unit::new_normalize(Vector3::from_row_slice(&self.orientation)),
             colormap: match self.colormap.as_str() {
                 "viridis" => ListedColorMap::viridis().vals,
                 "magma" => ListedColorMap::magma().vals,
