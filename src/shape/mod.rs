@@ -1,3 +1,5 @@
+mod circle;
+mod cylinder;
 mod infiniteplane;
 mod paraboloid;
 mod rectangle;
@@ -5,6 +7,7 @@ mod sphere;
 
 use crate::{Ray, TOLERANCE};
 pub use {
+    circle::CircleShape,
     infiniteplane::InfinitePlaneShape,
     nalgebra::{Point3, Unit, Vector3},
     paraboloid::ParaboloidShape,
@@ -22,6 +25,7 @@ pub trait Shape {
     fn origin(&self) -> Point3<f64>;
 }
 
+// TODO: exception for *PERFECTLY* parallel case
 pub fn plane_intersects_line(
     plane_origin: &Point3<f64>,
     plane_normal: &Unit<Vector3<f64>>,
