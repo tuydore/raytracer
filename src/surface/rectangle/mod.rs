@@ -42,7 +42,7 @@ impl Shape for RectangleShape {
         }
         None
     }
-    fn unchecked_normal_at(&self, point: &Point3<f64>) -> Unit<Vector3<f64>> {
+    fn unchecked_normal_at(&self, _: &Point3<f64>) -> Unit<Vector3<f64>> {
         self.normal
     }
     fn contains(&self, point: &Point3<f64>) -> bool {

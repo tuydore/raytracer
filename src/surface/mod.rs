@@ -5,6 +5,7 @@ pub mod plane;
 pub mod rectangle;
 pub mod sphere;
 pub use {
+    cylinder::CylinderBuilder,
     paraboloid::ParaboloidBuilder,
     plane::{CheckerboardBuilder, MandelbrotPlaneBuilder, PlaneBuilder},
     rectangle::{RectangleBuilder, TexturedRectangleBuilder},

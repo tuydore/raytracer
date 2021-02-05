@@ -19,8 +19,8 @@ impl SphereShape {
         north: Option<Vector3<f64>>,
         greenwich: Option<Vector3<f64>>,
     ) -> Self {
-        let north: Vector3<f64> = north.unwrap_or(Vector3::z());
-        let equator_plane = PlaneShape::new(center, north, None);
+        let north: Vector3<f64> = north.unwrap_or_else(Vector3::z);
+        let equator_plane = PlaneShape::new(center, north, greenwich);
         Self {
             center,
             radius,

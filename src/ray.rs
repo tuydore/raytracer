@@ -58,6 +58,7 @@ impl Ray {
     /// Analyze a ray incoming on a surface and determine the normal on the side of the incoming ray.
     /// If no errors are found, return intersection point, that normal and the above & below VOPs.
     /// Otherwise return an error.
+    #[allow(clippy::type_complexity)]
     fn get_interaction_parameters_unchecked(
         &self,
         surface: &dyn Surface,

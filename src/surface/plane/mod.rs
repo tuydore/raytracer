@@ -83,7 +83,7 @@ impl PlaneShape {
         // QUESTION: is this the right way around?
         // create to_local
         let to_local: Isometry3<f64> =
-            Isometry3::face_towards(&origin, &(origin + normal), &orientation.into_inner());
+            Isometry3::look_at_lh(&origin, &(origin + normal), &orientation.into_inner());
         Self {
             origin,
             normal: Unit::new_normalize(normal),
@@ -123,6 +123,14 @@ mod tests {
 
     fn xy_plane() -> PlaneShape {
         PlaneShape::new(Point3::new(0.0, 0.0, 0.0), Vector3::z(), None)
+    }
+
+    /// Isometry should be identity for Z axis points.
+    #[test]
+    fn xy_plane_to_local() {
+        let plane = xy_plane();
+        let p = Point3::new(0.0, 0.0, 2.0);
+        assert_eq!(plane.to_local * p, p);
     }
 
     #[test]

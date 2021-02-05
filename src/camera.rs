@@ -32,10 +32,14 @@ pub struct CameraBuilder {
 
 impl CameraBuilder {
     pub fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Camera {
+        // allow approximate "up" direction
+        let gaze: Vector3<f64> = Vector3::from_row_slice(&self.gaze);
+        let up: Vector3<f64> = Vector3::from_row_slice(&self.up);
+        let real_up: Vector3<f64> = gaze.cross(&up.cross(&gaze));
         Camera {
             origin: Point3::from_slice(&self.origin),
-            gaze: Vector3::from_row_slice(&self.gaze),
-            up: Vector3::from_row_slice(&self.up),
+            gaze,
+            up: real_up,
             fov: self.fov,
             density: self.density,
             vop: vop_map

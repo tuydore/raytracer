@@ -1,6 +1,7 @@
-use crate::TOLERANCE;
-
+pub mod simple;
 use super::pick_closest_intersection;
+use crate::TOLERANCE;
+pub use simple::CylinderBuilder;
 
 use {
     super::{disk::DiskShape, Shape},
@@ -43,6 +44,7 @@ impl CylinderShape {
 }
 
 impl Shape for CylinderShape {
+    #[allow(clippy::many_single_char_names)]
     fn intersection(&self, ray: &Ray) -> Option<Point3<f64>> {
         let mut intersections: Vec<Point3<f64>> = Vec::new();
 
@@ -78,32 +80,28 @@ impl Shape for CylinderShape {
                 // + case
                 lambda = (-b + beta.sqrt()) / (2.0 * a);
                 z = o.z + lambda * d.z;
-                if z <= 0.0 && -self.height <= z {
-                    intersections.push(o + lambda * d);
+                if z < 0.0 && -self.height < z {
+                    intersections.push(self.to_global() * (o + lambda * d));
                 }
                 // - case
                 lambda = (-b - beta.sqrt()) / (2.0 * a);
                 z = o.z + lambda * d.z;
-                if z <= 0.0 && -self.height <= z {
-                    intersections.push(o + lambda * d);
+                if z < 0.0 && -self.height < z {
+                    intersections.push(self.to_global() * (o + lambda * d));
                 }
             }
         }
 
         // return closest intersection in global coords
-        match intersections.len() {
-            0 => None,
-            1 => Some(self.to_global() * intersections.first().unwrap()),
-            _ => Some(self.to_global() * pick_closest_intersection(intersections, ray).unwrap()),
-        }
+        pick_closest_intersection(intersections, ray)
     }
     fn unchecked_normal_at(&self, point: &Point3<f64>) -> Unit<Vector3<f64>> {
         let local_point: Point3<f64> = self.to_local() * point;
         // if local point is at zero, this is the bottom surface
-        if (local_point.z - 0.0) <= TOLERANCE {
+        if (local_point.z - 0.0).abs() <= TOLERANCE {
             -self.direction
         // if it is at -height, it is at the top
-        } else if (local_point.z + self.height) <= TOLERANCE {
+        } else if (local_point.z + self.height).abs() <= TOLERANCE {
             self.direction
         // otherwise construct vector out of X and Y coords and convert back to global
         } else {
@@ -129,5 +127,123 @@ impl Shape for CylinderShape {
     }
     fn to_global(&self) -> &Isometry3<f64> {
         self.bottom_disk.to_global()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn cylinder() -> CylinderShape {
+        CylinderShape::new(Point3::new(0.0, 0.0, 5.0), Vector3::z(), 10.0, 1.0)
+    }
+
+    #[cfg(test)]
+    mod normals {
+        use super::*;
+
+        #[test]
+        fn top_normal() {
+            let cyl = cylinder();
+            assert_eq!(
+                cyl.unchecked_normal_at(&Point3::new(0.0, 0.0, 10.0))
+                    .into_inner(),
+                Vector3::z()
+            );
+        }
+
+        #[test]
+        fn bottom_normal() {
+            let cyl = cylinder();
+            assert_eq!(
+                cyl.unchecked_normal_at(&Point3::new(0.0, 0.0, 0.0))
+                    .into_inner(),
+                -Vector3::z()
+            );
+        }
+
+        #[test]
+        fn extreme_edge_bottom() {
+            let cyl = cylinder();
+            assert_eq!(
+                cyl.unchecked_normal_at(&Point3::new(1.0, 0.0, 0.0))
+                    .into_inner(),
+                -Vector3::z()
+            );
+        }
+
+        #[test]
+        fn side_normal() {
+            let cyl = cylinder();
+            assert_eq!(
+                cyl.unchecked_normal_at(&Point3::new(1.0, 0.0, 2.0))
+                    .into_inner(),
+                Vector3::x()
+            );
+        }
+    }
+
+    #[cfg(test)]
+    mod ray_intersections {
+        use super::*;
+        use crate::VOP;
+        use std::sync::Arc;
+
+        #[test]
+        fn bottom_disk_surface() {
+            let air = VOP {
+                ior: 1.0,
+                abs: [0.0, 0.0, 0.0],
+            };
+            let ray = Ray {
+                origin: Point3::new(0.25, 0.25, -1.0),
+                direction: Vector3::z(),
+                vop: Arc::new(air),
+                abs: [0.0, 0.0, 0.0],
+            };
+            let cyl = cylinder();
+            assert!(
+                (cyl.intersection(&ray).unwrap() - Point3::new(0.25, 0.25, 0.0)).norm_squared()
+                    <= TOLERANCE
+            );
+        }
+
+        #[test]
+        fn top_disk_surface() {
+            let air = VOP {
+                ior: 1.0,
+                abs: [0.0, 0.0, 0.0],
+            };
+            let ray = Ray {
+                origin: Point3::new(0.25, 0.25, 5.0),
+                direction: Vector3::z(),
+                vop: Arc::new(air),
+                abs: [0.0, 0.0, 0.0],
+            };
+            let cyl = cylinder();
+            assert!(
+                (cyl.intersection(&ray).unwrap() - Point3::new(0.25, 0.25, 10.0)).norm_squared()
+                    <= TOLERANCE
+            );
+        }
+
+        #[test]
+        fn side_intersection() {
+            let air = VOP {
+                ior: 1.0,
+                abs: [0.0, 0.0, 0.0],
+            };
+            let ray = Ray {
+                origin: Point3::new(-10.0, 0.0, 5.0),
+                direction: Vector3::x(),
+                vop: Arc::new(air),
+                abs: [0.0, 0.0, 0.0],
+            };
+            let cyl = cylinder();
+            assert!(
+                (cyl.intersection(&ray).unwrap() - Point3::new(-1.0, 0.0, 5.0)).norm_squared()
+                    <= TOLERANCE
+            );
+        }
     }
 }
