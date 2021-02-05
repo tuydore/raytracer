@@ -1,35 +1,53 @@
+pub mod simple;
+pub mod textured;
+use super::plane::PlaneShape;
 use {
-    super::{plane_contains_point, plane_intersects_ray, Shape},
+    super::Shape,
     crate::ray::Ray,
-    nalgebra::{Point3, Unit, Vector3},
+    nalgebra::{Isometry3, Point3, Unit, Vector3},
 };
+pub use {simple::RectangleBuilder, textured::TexturedRectangleBuilder};
 
 pub struct RectangleShape {
+    plane: PlaneShape,
     pub origin: Point3<f64>,
     pub normal: Unit<Vector3<f64>>,
     pub orientation: Unit<Vector3<f64>>,
     pub size: [f64; 2], // orientation is along 1st size dimension
 }
 
+impl RectangleShape {
+    pub fn new(
+        origin: Point3<f64>,
+        normal: Vector3<f64>,
+        orientation: Vector3<f64>,
+        size: [f64; 2],
+    ) -> Self {
+        Self {
+            plane: PlaneShape::new(origin, normal, Some(orientation)),
+            origin,
+            normal: Unit::new_normalize(normal),
+            orientation: Unit::new_normalize(orientation),
+            size,
+        }
+    }
+}
+
 impl Shape for RectangleShape {
     fn intersection(&self, ray: &Ray) -> Option<Point3<f64>> {
-        if let Some(p) = plane_intersects_ray(&self.origin, &self.normal, ray) {
+        if let Some(p) = self.plane.intersection(ray) {
             if self.contains(&p) {
                 return Some(p);
             }
         }
         None
     }
-    fn normal_at(&self, point: &Point3<f64>) -> Option<Unit<Vector3<f64>>> {
-        if self.contains(point) {
-            Some(self.normal)
-        } else {
-            None
-        }
+    fn unchecked_normal_at(&self, point: &Point3<f64>) -> Unit<Vector3<f64>> {
+        self.normal
     }
     fn contains(&self, point: &Point3<f64>) -> bool {
         // check if point is on plane
-        if !plane_contains_point(&self.origin, &self.normal, point) {
+        if !self.plane.contains(point) {
             return false;
         }
 
@@ -39,8 +57,14 @@ impl Shape for RectangleShape {
         let l1 = from_origin.dot(&self.normal.cross(&self.orientation)).abs();
         l0 <= self.size[0] / 2.0 && l1 <= self.size[1] / 2.0
     }
-    fn origin(&self) -> Point3<f64> {
-        self.origin
+    fn origin(&self) -> &Point3<f64> {
+        &self.origin
+    }
+    fn to_local(&self) -> &Isometry3<f64> {
+        self.plane.to_local()
+    }
+    fn to_global(&self) -> &Isometry3<f64> {
+        self.plane.to_global()
     }
 }
 
@@ -51,12 +75,12 @@ mod tests {
     use std::sync::Arc;
 
     fn xy_square() -> RectangleShape {
-        RectangleShape {
-            origin: Point3::new(0.0, 0.0, 0.0),
-            normal: Unit::new_normalize(Vector3::new(0.0, 0.0, 1.0)),
-            orientation: Unit::new_normalize(Vector3::new(0.0, 1.0, 0.0)),
-            size: [2.0, 2.0],
-        }
+        RectangleShape::new(
+            Point3::new(0.0, 0.0, 0.0),
+            Vector3::z(),
+            Vector3::y(),
+            [2.0, 2.0],
+        )
     }
 
     #[test]

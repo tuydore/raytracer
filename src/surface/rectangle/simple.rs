@@ -1,6 +1,9 @@
 use {
-    super::{Surface, SurfaceBuilder},
-    crate::{shape::RectangleShape, Shape, SOP, VOP},
+    super::{
+        super::{Shape, Surface, SurfaceBuilder},
+        RectangleShape,
+    },
+    crate::{Ray, SOP, VOP},
     collections::HashMap,
     nalgebra::{Point3, Unit, Vector3},
     serde::Deserialize,
@@ -27,16 +30,19 @@ pub struct RectangleBuilder {
 }
 
 impl Surface for Rectangle {
-    fn geometry(&self) -> &dyn Shape {
-        &self.geometry
+    fn intersection(&self, ray: &Ray) -> Option<Point3<f64>> {
+        self.geometry.intersection(ray)
     }
-    fn vop_above_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
+    fn unchecked_normal_at(&self, point: &Point3<f64>) -> Unit<Vector3<f64>> {
+        self.geometry.unchecked_normal_at(point)
+    }
+    fn unchecked_vop_above_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
         self.vop_above.clone()
     }
-    fn vop_below_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
+    fn unchecked_vop_below_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
         self.vop_below.clone()
     }
-    fn sop_at(&self, _point: &Point3<f64>) -> SOP {
+    fn unchecked_sop_at(&self, _point: &Point3<f64>) -> SOP {
         self.sop
     }
 }
@@ -44,12 +50,12 @@ impl Surface for Rectangle {
 impl SurfaceBuilder for RectangleBuilder {
     fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(Rectangle {
-            geometry: RectangleShape {
-                origin: Point3::from_slice(&self.origin),
-                normal: Unit::new_normalize(Vector3::from_row_slice(&self.normal)),
-                orientation: Unit::new_normalize(Vector3::from_row_slice(&self.orientation)),
-                size: self.size,
-            },
+            geometry: RectangleShape::new(
+                Point3::from_slice(&self.origin),
+                Vector3::from_row_slice(&self.normal),
+                Vector3::from_row_slice(&self.orientation),
+                self.size,
+            ),
             sop: self.sop,
             vop_above: vop_map
                 .get(&self.vop_above)

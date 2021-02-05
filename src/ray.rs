@@ -20,7 +20,7 @@ impl Ray {
             // get all first intersections with surfaces and distances to them
             let intersections: Vec<Option<(Point3<f64>, f64)>> = surfaces
                 .iter()
-                .map(|s| s.geometry().intersection(self))
+                .map(|s| s.intersection(self))
                 .map(|p| {
                     if let Some(point) = p {
                         Some((point, (point - self.origin).norm_squared()))
@@ -64,14 +64,11 @@ impl Ray {
         point: &Point3<f64>,
     ) -> Result<(Unit<Vector3<f64>>, Arc<VOP>, Arc<VOP>), Box<dyn Error>> {
         // get VOPs above and below
-        let vop_above = surface.vop_above_at(&point);
-        let vop_below = surface.vop_below_at(&point);
+        let vop_above = surface.unchecked_vop_above_at(&point);
+        let vop_below = surface.unchecked_vop_below_at(&point);
 
         // get normal at point
-        let normal = surface
-            .geometry()
-            .normal_at(&point)
-            .unwrap_or_else(|| panic!("No normal found at point {:?}.", point));
+        let normal = surface.unchecked_normal_at(&point);
 
         // ray is inbound from medium into which normal points
         if normal.dot(&self.direction) <= 0.0 {
@@ -114,7 +111,7 @@ impl Ray {
             self.abs[i] += self.vop.abs[i] * distance;
         }
 
-        let sop = surface.sop_at(point);
+        let sop = surface.unchecked_sop_at(point);
         match sop {
             SOP::Reflect => {
                 if let Ok((normal, _, _)) =
@@ -207,7 +204,10 @@ pub enum BounceResult {
 mod tests {
     use {
         super::*,
-        crate::{shape::InfinitePlaneShape, surface::plane::Plane, TOLERANCE},
+        crate::{
+            surface::plane::{simple::Plane, PlaneShape},
+            TOLERANCE,
+        },
     };
 
     fn air() -> Arc<VOP> {
@@ -226,10 +226,7 @@ mod tests {
 
     fn reflective_plane(air: Arc<VOP>) -> Plane {
         Plane {
-            geometry: InfinitePlaneShape {
-                origin: Point3::origin(),
-                normal: Unit::new_normalize(Vector3::z()),
-            },
+            geometry: PlaneShape::new(Point3::origin(), Vector3::z(), None),
             sop: SOP::Reflect,
             vop_above: air.clone(),
             vop_below: air,
@@ -246,10 +243,7 @@ mod tests {
 
         fn refractive_plane(air: Arc<VOP>, glass: Arc<VOP>) -> Plane {
             Plane {
-                geometry: InfinitePlaneShape {
-                    origin: Point3::origin(),
-                    normal: Unit::new_normalize(Vector3::z()),
-                },
+                geometry: PlaneShape::new(Point3::origin(), Vector3::z(), None),
                 sop: SOP::Refract,
                 vop_above: air,
                 vop_below: glass,
@@ -284,18 +278,20 @@ mod tests {
                 abs: [0.0; 3],
             };
             let mut ray = original_ray.clone();
-            let intersection = plane.geometry().intersection(&original_ray).unwrap();
+            let intersection = plane.intersection(&original_ray).unwrap();
             ray.bounce_unchecked(&plane, &Point3::origin());
 
             // calculate via snell's law
-            let normal = plane.geometry().normal_at(&ray.origin).unwrap().normalize();
+            let normal = plane.unchecked_normal_at(&ray.origin);
             let theta_i = normal
                 .dot(&(-1.0 * original_ray.direction).normalize())
                 .acos();
-            let theta_t = (-1.0 * normal).dot(&ray.direction.normalize()).acos();
+            let theta_t = (-1.0 * normal.into_inner())
+                .dot(&ray.direction.normalize())
+                .acos();
             assert!(
-                plane.vop_above_at(&intersection).ior * theta_i.sin()
-                    - plane.vop_below_at(&intersection).ior * theta_t.sin()
+                plane.unchecked_vop_above_at(&intersection).ior * theta_i.sin()
+                    - plane.unchecked_vop_below_at(&intersection).ior * theta_t.sin()
                     <= f64::EPSILON
             );
         }
@@ -311,17 +307,17 @@ mod tests {
                 vop: glass,
                 abs: [0.0; 3],
             };
-            let intersection = plane.geometry().intersection(&original_ray).unwrap();
+            let intersection = plane.intersection(&original_ray).unwrap();
             let mut ray = original_ray.clone();
             ray.bounce_unchecked(&plane, &Point3::origin());
 
             // calculate via snell's law
-            let normal = plane.geometry().normal_at(&ray.origin).unwrap().normalize();
+            let normal = plane.unchecked_normal_at(&ray.origin);
             let theta_i = normal.dot(&(original_ray.direction).normalize()).acos();
             let theta_t = normal.dot(&ray.direction.normalize());
             assert!(
-                plane.vop_below_at(&intersection).ior * theta_i.sin()
-                    - plane.vop_above_at(&intersection).ior * theta_t.sin()
+                plane.unchecked_vop_below_at(&intersection).ior * theta_i.sin()
+                    - plane.unchecked_vop_above_at(&intersection).ior * theta_t.sin()
                     <= f64::EPSILON
             );
         }
@@ -365,10 +361,7 @@ mod tests {
 
         fn light_plane(vop: Arc<VOP>) -> Plane {
             Plane {
-                geometry: InfinitePlaneShape {
-                    origin: Point3::origin(),
-                    normal: Unit::new_normalize(Vector3::new(0.0, 0.0, 1.0)),
-                },
+                geometry: PlaneShape::new(Point3::origin(), Vector3::z(), None),
                 sop: SOP::Light(255, 255, 255),
                 vop_above: vop.clone(),
                 vop_below: vop,
@@ -377,10 +370,7 @@ mod tests {
 
         fn dark_plane(vop: Arc<VOP>) -> Plane {
             Plane {
-                geometry: InfinitePlaneShape {
-                    origin: Point3::origin(),
-                    normal: Unit::new_normalize(Vector3::new(0.0, 0.0, 1.0)),
-                },
+                geometry: PlaneShape::new(Point3::origin(), Vector3::z(), None),
                 sop: SOP::Dark,
                 vop_above: vop.clone(),
                 vop_below: vop,

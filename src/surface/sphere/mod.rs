@@ -1,12 +1,32 @@
+pub mod simple;
+pub use simple::SphereBuilder;
 use {
-    super::{pick_closest_intersection, Shape},
+    super::{pick_closest_intersection, plane::PlaneShape, Shape},
     crate::{Ray, TOLERANCE},
-    nalgebra::{Point3, Unit, Vector3},
+    nalgebra::{Isometry3, Point3, Unit, Vector3},
 };
 
 pub struct SphereShape {
+    equator_plane: PlaneShape,
     pub center: Point3<f64>,
     pub radius: f64,
+}
+
+impl SphereShape {
+    fn new(
+        center: Point3<f64>,
+        radius: f64,
+        north: Option<Vector3<f64>>,
+        greenwich: Option<Vector3<f64>>,
+    ) -> Self {
+        let north: Vector3<f64> = north.unwrap_or(Vector3::z());
+        let equator_plane = PlaneShape::new(center, north, None);
+        Self {
+            center,
+            radius,
+            equator_plane,
+        }
+    }
 }
 
 impl SphereShape {
@@ -56,21 +76,20 @@ impl Shape for SphereShape {
     fn intersection(&self, ray: &Ray) -> Option<Point3<f64>> {
         pick_closest_intersection(self.line_intersection(&ray.origin, &ray.direction), ray)
     }
-
     fn contains(&self, point: &Point3<f64>) -> bool {
         ((self.center - *point).norm() - self.radius).abs() <= TOLERANCE
     }
-
-    fn normal_at(&self, point: &Point3<f64>) -> Option<Unit<Vector3<f64>>> {
-        if self.contains(point) {
-            Some(Unit::new_normalize(*point - self.center))
-        } else {
-            None
-        }
+    fn unchecked_normal_at(&self, point: &Point3<f64>) -> Unit<Vector3<f64>> {
+        Unit::new_normalize(*point - self.center)
     }
-
-    fn origin(&self) -> Point3<f64> {
-        self.center
+    fn origin(&self) -> &Point3<f64> {
+        &self.center
+    }
+    fn to_local(&self) -> &Isometry3<f64> {
+        self.equator_plane.to_local()
+    }
+    fn to_global(&self) -> &Isometry3<f64> {
+        self.equator_plane.to_global()
     }
 }
 
@@ -81,10 +100,7 @@ mod tests {
     use std::sync::Arc;
 
     fn center_unit_sphere() -> SphereShape {
-        SphereShape {
-            center: Point3::new(0.0, 0.0, 0.0),
-            radius: 1.0,
-        }
+        SphereShape::new(Point3::origin(), 1.0, None, None)
     }
 
     fn downwards_ray(vop: Arc<VOP>) -> Ray {

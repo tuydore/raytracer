@@ -3,8 +3,11 @@ use image::GenericImageView;
 use crate::TOLERANCE;
 
 use {
-    super::{Surface, SurfaceBuilder},
-    crate::{shape::RectangleShape, Shape, SOP, VOP},
+    super::{
+        super::{Shape, Surface, SurfaceBuilder},
+        RectangleShape,
+    },
+    crate::{Ray, SOP, VOP},
     collections::HashMap,
     image::{io::Reader, DynamicImage, RgbImage},
     nalgebra::{Point3, Unit, Vector3},
@@ -33,16 +36,19 @@ pub struct TexturedRectangleBuilder {
 }
 
 impl Surface for TexturedRectangle {
-    fn geometry(&self) -> &dyn Shape {
-        &self.geometry
+    fn intersection(&self, ray: &Ray) -> Option<Point3<f64>> {
+        self.geometry.intersection(ray)
     }
-    fn vop_above_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
+    fn unchecked_normal_at(&self, point: &Point3<f64>) -> Unit<Vector3<f64>> {
+        self.geometry.unchecked_normal_at(point)
+    }
+    fn unchecked_vop_above_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
         self.vop_above.clone()
     }
-    fn vop_below_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
+    fn unchecked_vop_below_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
         self.vop_below.clone()
     }
-    fn sop_at(&self, point: &Point3<f64>) -> SOP {
+    fn unchecked_sop_at(&self, point: &Point3<f64>) -> SOP {
         // orientation == vertical of image / texture, along 1st size dimension
         let right: Vector3<f64> = self.geometry.orientation.cross(&self.geometry.normal);
         let upper_left_corner: Point3<f64> = self.geometry.origin
@@ -81,12 +87,12 @@ impl SurfaceBuilder for TexturedRectangleBuilder {
         }
 
         Arc::new(TexturedRectangle {
-            geometry: RectangleShape {
-                origin: Point3::from_slice(&self.origin),
-                normal: Unit::new_normalize(Vector3::from_row_slice(&self.normal)),
-                orientation: Unit::new_normalize(Vector3::from_row_slice(&self.orientation)),
-                size: self.size,
-            },
+            geometry: RectangleShape::new(
+                Point3::from_slice(&self.origin),
+                Vector3::from_row_slice(&self.normal),
+                Vector3::from_row_slice(&self.orientation),
+                self.size,
+            ),
             size_scaling,
             texture: dyn_image
                 .as_rgb8()

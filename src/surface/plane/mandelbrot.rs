@@ -1,6 +1,9 @@
 use {
-    super::{Surface, SurfaceBuilder},
-    crate::{shape::InfinitePlaneShape, Shape, SOP, VOP},
+    super::{
+        super::{Shape, Surface, SurfaceBuilder},
+        PlaneShape,
+    },
+    crate::{Ray, SOP, VOP},
     collections::HashMap,
     nalgebra::{Point3, Unit, Vector3},
     num_complex::Complex,
@@ -11,7 +14,7 @@ use {
 };
 
 pub struct MandelbrotPlane {
-    pub geometry: InfinitePlaneShape,
+    pub geometry: PlaneShape,
     pub orientation: Unit<Vector3<f64>>,
     pub vop_above: Arc<VOP>,
     pub vop_below: Arc<VOP>,
@@ -63,10 +66,11 @@ pub fn mandelbrot(x: f64, y: f64, max_iter: usize) -> usize {
 impl SurfaceBuilder for MandelbrotPlaneBuilder {
     fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(MandelbrotPlane {
-            geometry: InfinitePlaneShape {
-                origin: Point3::from_slice(&self.origin),
-                normal: Unit::new_normalize(Vector3::from_row_slice(&self.normal)),
-            },
+            geometry: PlaneShape::new(
+                Point3::from_slice(&self.origin),
+                Vector3::from_row_slice(&self.normal),
+                Some(Vector3::from_row_slice(&self.orientation)),
+            ),
             orientation: Unit::new_normalize(Vector3::from_row_slice(&self.orientation)),
             colormap: match self.colormap.as_str() {
                 "viridis" => ListedColorMap::viridis().vals,
@@ -91,25 +95,26 @@ impl SurfaceBuilder for MandelbrotPlaneBuilder {
 }
 
 impl Surface for MandelbrotPlane {
-    fn geometry(&self) -> &dyn Shape {
-        &self.geometry
+    fn intersection(&self, ray: &Ray) -> Option<Point3<f64>> {
+        self.geometry.intersection(ray)
     }
-    fn vop_above_at(&self, _: &Point3<f64>) -> Arc<VOP> {
+    fn unchecked_normal_at(&self, point: &Point3<f64>) -> Unit<Vector3<f64>> {
+        self.geometry.unchecked_normal_at(point)
+    }
+    fn unchecked_vop_above_at(&self, _: &Point3<f64>) -> Arc<VOP> {
         self.vop_above.clone()
     }
-    fn vop_below_at(&self, _: &Point3<f64>) -> Arc<VOP> {
+    fn unchecked_vop_below_at(&self, _: &Point3<f64>) -> Arc<VOP> {
         self.vop_below.clone()
     }
-    fn sop_at(&self, point: &Point3<f64>) -> SOP {
+    fn unchecked_sop_at(&self, point: &Point3<f64>) -> SOP {
         // intersection with plane
         let y: Vector3<f64> = self
-            .geometry
-            .normal_at(point)
-            .unwrap()
+            .unchecked_normal_at(point)
             .cross(&self.orientation)
             .normalize();
         let x: Vector3<f64> = self.orientation.normalize(); // TODO: should be by default
-        let from_origin: Vector3<f64> = *point - self.geometry().origin();
+        let from_origin: Vector3<f64> = *point - self.geometry.origin;
 
         let xproj = from_origin.dot(&x);
         let yproj = from_origin.dot(&y);

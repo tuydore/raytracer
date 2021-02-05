@@ -1,8 +1,11 @@
 use {
-    super::{Surface, SurfaceBuilder},
-    crate::{shape::SphereShape, Shape, SOP, VOP},
+    super::{
+        super::{Shape, Surface, SurfaceBuilder},
+        SphereShape,
+    },
+    crate::{Ray, SOP, VOP},
     collections::HashMap,
-    nalgebra::Point3,
+    nalgebra::{Point3, Unit, Vector3},
     serde::Deserialize,
     std::collections,
     std::sync::Arc,
@@ -25,16 +28,19 @@ pub struct SphereBuilder {
 }
 
 impl Surface for Sphere {
-    fn geometry(&self) -> &dyn Shape {
-        &self.geometry
+    fn intersection(&self, ray: &Ray) -> Option<Point3<f64>> {
+        self.geometry.intersection(ray)
     }
-    fn vop_above_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
+    fn unchecked_normal_at(&self, point: &Point3<f64>) -> Unit<Vector3<f64>> {
+        self.geometry.unchecked_normal_at(point)
+    }
+    fn unchecked_vop_above_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
         self.vop_above.clone()
     }
-    fn vop_below_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
+    fn unchecked_vop_below_at(&self, _point: &Point3<f64>) -> Arc<VOP> {
         self.vop_below.clone()
     }
-    fn sop_at(&self, _point: &Point3<f64>) -> SOP {
+    fn unchecked_sop_at(&self, _point: &Point3<f64>) -> SOP {
         self.sop
     }
 }
@@ -42,10 +48,7 @@ impl Surface for Sphere {
 impl SurfaceBuilder for SphereBuilder {
     fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(Sphere {
-            geometry: SphereShape {
-                center: Point3::from_slice(&self.center),
-                radius: self.radius,
-            },
+            geometry: SphereShape::new(Point3::from_slice(&self.center), self.radius, None, None),
             sop: self.sop,
             vop_above: vop_map
                 .get(&self.vop_above)

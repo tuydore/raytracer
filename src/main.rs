@@ -3,8 +3,8 @@ use {
     raytracer::{
         camera::CameraBuilder,
         surface::{
-            CheckerboardBuilder, MandelbrotPlaneBuilder, PlaneBuilder, RectangleBuilder,
-            SphereBuilder, SurfaceBuilder, TexturedRectangleBuilder, ZParaboloidBuilder,
+            CheckerboardBuilder, MandelbrotPlaneBuilder, ParaboloidBuilder, PlaneBuilder,
+            RectangleBuilder, SphereBuilder, SurfaceBuilder, TexturedRectangleBuilder,
         },
         Camera, Surface, VOP,
     },
@@ -110,8 +110,8 @@ fn extract_surfaces(
             "sphere" => from_value::<SphereBuilder>(s.to_owned())
                 .expect("Error parsing sphere.")
                 .build(vop_map),
-            "zparaboloid" => from_value::<ZParaboloidBuilder>(s.to_owned())
-                .expect("Error parsing zparaboloid.")
+            "" => from_value::<ParaboloidBuilder>(s.to_owned())
+                .expect("Error parsing paraboloid.")
                 .build(vop_map),
             _ => panic!("Unknown surface type"),
         };
