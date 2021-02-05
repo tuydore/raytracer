@@ -1,7 +1,7 @@
 use image::GenericImageView;
 
 use crate::TOLERANCE;
-
+// TODO: fix orientation
 use {
     super::{
         super::{Shape, Surface, SurfaceBuilder},
@@ -59,8 +59,8 @@ impl Surface for TexturedRectangle {
 
         // calculate ox and oy in "pixel" values
         let offset: Vector3<f64> = point - upper_left_corner;
-        let ox = (offset.dot(&self.geometry.orientation)).abs() * self.size_scaling[0];
-        let oy = (offset.dot(&right)).abs() * self.size_scaling[1];
+        let oy = (offset.dot(&self.geometry.orientation)).abs() * self.size_scaling[0];
+        let ox = (offset.dot(&right)).abs() * self.size_scaling[1];
         let color = self.texture.get_pixel(ox as u32, oy as u32);
         SOP::Light(color[0], color[1], color[2])
     }
