@@ -1,4 +1,4 @@
-filepath: "examples/mandelbrot_plane_magma.jpg"
+filepath: "examples/mandelbrot_plane_magma.tiff"
 
 camera:
   origin: [-10.0, 2.0, 1.0]
@@ -7,6 +7,7 @@ camera:
   fov: [18.0, 32.0]
   density: 200.0
   vop: air
+  antialiasing: 3
 
 volumes:
   air:
