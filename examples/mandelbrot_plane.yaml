@@ -1,4 +1,4 @@
-filepath: "mandelbrot_plane_magma.jpg"
+filepath: "examples/mandelbrot_plane_magma.jpg"
 
 camera:
   origin: [-10.0, 2.0, 1.0]

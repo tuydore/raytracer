@@ -4,3 +4,6 @@ Cargo.lock
 /config
 /.vscode
 /playground
+*.jpg
+*.jpeg
+*.tiff

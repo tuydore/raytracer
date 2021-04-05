@@ -1,4 +1,4 @@
-filepath: "demo.jpg"
+filepath: "examples/demo.jpg"
 threads: 12
 
 camera:

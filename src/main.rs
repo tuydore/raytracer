@@ -1,13 +1,13 @@
 use {
     rayon::ThreadPoolBuilder,
     raytracer::{
-        camera::CameraBuilder,
+        camera::{combine_rays, save_jpg, trace_rays, Camera, CameraBuilder},
         surface::{
             CheckerboardBuilder, CylinderBuilder, MandelbrotPlaneBuilder, ParaboloidBuilder,
             PlaneBuilder, RectangleBuilder, SphereBuilder, SurfaceBuilder,
             TexturedRectangleBuilder,
         },
-        Camera, Surface, VOP,
+        Ray, Surface, VOP,
     },
     serde_yaml::{from_str, from_value, Mapping, Value},
     std::{collections::HashMap, env, fs, sync::Arc},
@@ -125,6 +125,16 @@ fn extract_surfaces(
     surface_list
 }
 
+fn raytrace(camera: &Camera, scene: &[Arc<dyn Surface + Send + Sync>], filepath: &str) {
+    let rays: Vec<Ray> = camera.create_rays();
+    save_jpg(
+        filepath,
+        combine_rays(trace_rays(rays, scene), camera.antialiasing),
+        camera.num_x,
+        camera.num_y,
+    );
+}
+
 fn main() {
     let document = load_from_yaml();
 
@@ -149,7 +159,6 @@ fn main() {
         surfaces.len()
     );
 
-    let result = camera.look(&surfaces);
-    camera.save_jpg(&filepath, result);
+    raytrace(&camera, &surfaces, &filepath);
     println!("Result saved: {}", filepath);
 }
