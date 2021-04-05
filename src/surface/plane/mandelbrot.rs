@@ -3,11 +3,11 @@ use {
         super::{Shape, Surface, SurfaceBuilder},
         PlaneShape,
     },
-    crate::{Ray, SOP, VOP},
+    crate::{colormap::load_colormap, Ray, SOP, VOP},
     collections::HashMap,
+    colorgrad::Color,
     nalgebra::{Point3, Unit, Vector3},
     num_complex::Complex,
-    scarlet::colormap::ListedColorMap,
     serde::Deserialize,
     std::collections,
     std::sync::Arc,
@@ -18,7 +18,7 @@ pub struct MandelbrotPlane {
     pub orientation: Unit<Vector3<f64>>,
     pub vop_above: Arc<VOP>,
     pub vop_below: Arc<VOP>,
-    pub colormap: Vec<[f64; 3]>,
+    pub colormap: Vec<Color>,
     pub mandelbrot_scale: f64,
     pub mandelbrot_maxiter: usize,
     pub mandelbrot_origin: [f64; 2],
@@ -30,6 +30,8 @@ pub struct MandelbrotPlaneBuilder {
     pub normal: [f64; 3],
     pub orientation: [f64; 3],
     pub colormap: String,
+    #[serde(default = "default_num_colors")]
+    pub num_colors: usize,
     pub vop_below: String,
     pub vop_above: String,
     #[serde(default = "default_mandelbrot_origin")]
@@ -52,6 +54,10 @@ fn default_mandelbrot_maxiter() -> usize {
     50
 }
 
+fn default_num_colors() -> usize {
+    1000
+}
+
 pub fn mandelbrot(x: f64, y: f64, max_iter: usize) -> usize {
     let coord = Complex::new(x, y);
     let mut z = Complex::new(0.0, 0.0);
@@ -72,13 +78,7 @@ impl SurfaceBuilder for MandelbrotPlaneBuilder {
                 Some(Vector3::from_row_slice(&self.orientation)),
             ),
             orientation: Unit::new_normalize(Vector3::from_row_slice(&self.orientation)),
-            colormap: match self.colormap.as_str() {
-                "viridis" => ListedColorMap::viridis().vals,
-                "magma" => ListedColorMap::magma().vals,
-                "inferno" => ListedColorMap::inferno().vals,
-                "plasma" => ListedColorMap::plasma().vals,
-                s => panic!("Unknown color map {}", s),
-            },
+            colormap: load_colormap(&self.colormap, self.num_colors),
             vop_above: vop_map
                 .get(&self.vop_above)
                 .expect("No VOP above mapping found.")
@@ -107,6 +107,7 @@ impl Surface for MandelbrotPlane {
     fn unchecked_vop_below_at(&self, _: &Point3<f64>) -> Arc<VOP> {
         self.vop_below.clone()
     }
+    #[allow(clippy::clippy::many_single_char_names)]
     fn unchecked_sop_at(&self, point: &Point3<f64>) -> SOP {
         // intersection with plane
         let y: Vector3<f64> = self
@@ -128,13 +129,12 @@ impl Surface for MandelbrotPlane {
         if x == self.mandelbrot_maxiter {
             SOP::Dark
         } else {
-            let rgb_float: [f64; 3] =
-                self.colormap[self.colormap.len() * x / self.mandelbrot_maxiter];
-            SOP::Light(
-                (rgb_float[0] * 255.0) as u8,
-                (rgb_float[1] * 255.0) as u8,
-                (rgb_float[2] * 255.0) as u8,
-            )
+            let (r, g, b, _) = self
+                .colormap
+                .get(self.colormap.len() * x / self.mandelbrot_maxiter)
+                .expect("Invalid field in colormap.")
+                .rgba_u8();
+            SOP::Light(r, g, b)
         }
     }
 }

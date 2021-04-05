@@ -10,6 +10,7 @@ use {
     std::collections,
     std::sync::Arc,
 };
+// TODO: issue with cylinder
 
 pub struct Cylinder {
     pub geometry: CylinderShape,
@@ -46,7 +47,7 @@ impl Surface for Cylinder {
         self.sop
     }
 }
-
+// BUG: VOP mismatch for edges?
 impl SurfaceBuilder for CylinderBuilder {
     fn build(self, vop_map: &HashMap<String, Arc<VOP>>) -> Arc<dyn Surface + Send + Sync> {
         Arc::new(Cylinder {
