@@ -1,7 +1,7 @@
 use {
     crate::{Surface, SOP, VOP},
     nalgebra::{Point3, Unit, Vector3},
-    std::{error::Error, sync::Arc},
+    std::sync::Arc,
 };
 
 #[derive(Debug, Clone)]
@@ -63,7 +63,7 @@ impl Ray {
         &self,
         surface: &dyn Surface,
         point: &Point3<f64>,
-    ) -> Result<(Unit<Vector3<f64>>, Arc<VOP>, Arc<VOP>), Box<dyn Error>> {
+    ) -> (Unit<Vector3<f64>>, Arc<VOP>, Arc<VOP>) {
         // get VOPs above and below
         let vop_above = surface.unchecked_vop_above_at(&point);
         let vop_below = surface.unchecked_vop_below_at(&point);
@@ -84,7 +84,7 @@ impl Ray {
                     normal,
                 )
             }
-            Ok((normal, vop_above, vop_below))
+            (normal, vop_above, vop_below)
         // ray is inbound from other side of boundary
         } else {
             if self.vop != vop_below {
@@ -97,11 +97,11 @@ impl Ray {
                     normal,
                 )
             }
-            Ok((
+            (
                 Unit::new_normalize(-1.0 * normal.into_inner()),
                 vop_below,
                 vop_above,
-            ))
+            )
         }
     }
 
@@ -115,22 +115,15 @@ impl Ray {
         let sop = surface.unchecked_sop_at(point);
         match sop {
             SOP::Reflect => {
-                if let Ok((normal, _, _)) =
-                    self.get_interaction_parameters_unchecked(surface, point)
-                {
-                    self.reflect(point, &normal);
-                    return BounceResult::Continue;
-                }
-                BounceResult::Error
+                let (normal, _, _) = self.get_interaction_parameters_unchecked(surface, point);
+                self.reflect(point, &normal);
+                BounceResult::Continue
             }
             SOP::Refract => {
-                if let Ok((normal, vop_above, vop_below)) =
-                    self.get_interaction_parameters_unchecked(surface, point)
-                {
-                    self.refract(point, &normal, vop_above, vop_below);
-                    return BounceResult::Continue;
-                }
-                BounceResult::Error
+                let (normal, vop_above, vop_below) =
+                    self.get_interaction_parameters_unchecked(surface, point);
+                self.refract(point, &normal, vop_above, vop_below);
+                BounceResult::Continue
             }
             SOP::Light(r, g, b) => {
                 let actual_rgb: Vec<u8> = self

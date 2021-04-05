@@ -65,7 +65,7 @@ pub fn plane_intersects_ray(
 pub struct PlaneShape {
     pub origin: Point3<f64>,
     pub normal: Unit<Vector3<f64>>,
-    orientation: Unit<Vector3<f64>>,
+    // orientation: Unit<Vector3<f64>>, // QUESTION: what about this?
     to_local: Isometry3<f64>,
     to_global: Isometry3<f64>,
 }
@@ -87,7 +87,7 @@ impl PlaneShape {
         Self {
             origin,
             normal: Unit::new_normalize(normal),
-            orientation,
+            // orientation,
             to_local,
             to_global: to_local.inverse(),
         }
