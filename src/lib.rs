@@ -1,4 +1,5 @@
 pub mod camera;
+pub mod colormap;
 pub mod ray;
 pub mod surface;
 pub mod vop;

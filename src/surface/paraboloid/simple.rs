@@ -18,6 +18,8 @@ pub struct Paraboloid {
     vop_below: Arc<VOP>,
 }
 
+// TODO: issue with normal direction?
+
 #[derive(Deserialize)]
 pub struct ParaboloidBuilder {
     pub origin: [f64; 3],

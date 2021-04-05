@@ -35,7 +35,7 @@ impl CameraBuilder {
         // allow approximate "up" direction
         let gaze: Vector3<f64> = Vector3::from_row_slice(&self.gaze);
         let up: Vector3<f64> = Vector3::from_row_slice(&self.up);
-        let real_up: Vector3<f64> = gaze.cross(&up.cross(&gaze));
+        let real_up: Vector3<f64> = gaze.cross(&up.cross(&gaze)); // TODO: add unit test for this
         Camera {
             origin: Point3::from_slice(&self.origin),
             gaze,
@@ -50,7 +50,6 @@ impl CameraBuilder {
     }
 }
 
-// TODO: check gaze and up are perpendicular
 impl Camera {
     /// Assume a screen filling the entire FOV will be placed at a distance of 1 in front of the camera.
     /// With the density parameter, we will approximate the number of bins in each dimension.

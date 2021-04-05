@@ -83,7 +83,7 @@ impl SurfaceBuilder for TexturedRectangleBuilder {
             dyn_image.width() as f64 / self.size[1],
         ];
         if (size_scaling[0] - size_scaling[1]).abs() >= TOLERANCE {
-            log::warn!("Texture {} will be rescaled.", self.texture);
+            println!("Texture {} will be rescaled.", self.texture);
         }
 
         Arc::new(TexturedRectangle {

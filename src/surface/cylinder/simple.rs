@@ -10,6 +10,7 @@ use {
     std::collections,
     std::sync::Arc,
 };
+// TODO: issue with cylinder
 
 pub struct Cylinder {
     pub geometry: CylinderShape,
