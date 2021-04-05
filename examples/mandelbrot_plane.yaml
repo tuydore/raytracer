@@ -4,7 +4,7 @@ camera:
   origin: [-10.0, 2.0, 1.0]
   gaze: [1.0, 0.0, 0.0]
   up: [0.0, 0.0, 1.0]
-  fov: [18.0, 32.0]
+  fov: [20.0, 32.0]
   density: 200.0
   vop: air
   antialiasing: 3

@@ -80,7 +80,7 @@ pub fn trace_rays(rays: Vec<Ray>, scene: &[Arc<dyn Surface + Send + Sync>]) -> V
 fn average_array3(arr3: &[[u8; 3]]) -> [u8; 3] {
     let mut result: [usize; 3] = [0; 3];
     let l = arr3.len();
-    for n in 0..2 {
+    for n in 0..=2 {
         for elem in arr3 {
             result[n] += elem[n] as usize;
         }
@@ -173,7 +173,10 @@ impl Camera {
                 abs: [0.0; 3],
             })
             .collect();
-        println!("done ({}s)", t0.elapsed().as_millis() as f64 / 1000.0);
+        println!(
+            "done! Total time: {}s.",
+            t0.elapsed().as_millis() as f64 / 1000.0
+        );
         rays
     }
 }
