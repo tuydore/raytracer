@@ -107,8 +107,6 @@ impl Shape for ParaboloidShape {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::VOP;
-    use std::sync::Arc;
 
     fn center_paraboloid() -> ParaboloidShape {
         ParaboloidShape::new(
@@ -137,15 +135,10 @@ mod tests {
     #[test]
     fn ray_intersections() {
         let p = center_paraboloid();
-        let air = Arc::new(VOP {
-            ior: 1.0,
-            abs: [0.0; 3],
-        });
         let r = Ray {
             origin: Point3::new(0.0, -10.0, 2.0),
             direction: Vector3::y(),
-            vop: air,
-            abs: [0.0; 3],
+            ..Default::default()
         };
 
         let intersections = p.line_intersection(&r.origin, &r.direction);

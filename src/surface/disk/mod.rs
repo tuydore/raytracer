@@ -53,8 +53,6 @@ impl Shape for DiskShape {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::VOP;
-    use std::sync::Arc;
 
     fn xy_circle() -> DiskShape {
         DiskShape::new(Point3::new(0.0, 0.0, 0.0), Vector3::new(0.0, 0.0, 1.0), 1.0)
@@ -63,15 +61,10 @@ mod tests {
     #[test]
     fn test_intersection() {
         let plane = xy_circle();
-        let air = Arc::new(VOP {
-            ior: 1.0,
-            abs: [0.0; 3],
-        });
         let ray = Ray {
             origin: Point3::new(0.0, 0.0, 1.0),
             direction: Vector3::new(0.0, 0.8, -1.0),
-            vop: air,
-            abs: [0.0; 3],
+            ..Default::default()
         };
         assert!(plane.intersects(&ray));
         assert_eq!(plane.intersection(&ray), Some(Point3::new(0.0, 0.8, 0.0)));
@@ -79,15 +72,10 @@ mod tests {
     #[test]
     fn test_no_intersection() {
         let plane = xy_circle();
-        let air = Arc::new(VOP {
-            ior: 1.0,
-            abs: [0.0; 3],
-        });
         let ray = Ray {
             origin: Point3::new(0.0, 0.0, 1.0),
             direction: Vector3::new(1.2, 0.0, -1.0),
-            vop: air,
-            abs: [0.0; 3],
+            ..Default::default()
         };
         assert!(!plane.intersects(&ray));
         assert_eq!(plane.intersection(&ray), None);

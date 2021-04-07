@@ -10,6 +10,26 @@ pub struct Ray {
     pub direction: Vector3<f64>,
     pub vop: Arc<VOP>,
     pub abs: [f64; 3], // TODO: ray absorption when ray has no more intersections?
+    pub depth: usize,
+    pub pixel: usize,
+    pub result: Option<[u8; 3]>,
+}
+
+impl Default for Ray {
+    fn default() -> Self {
+        Self {
+            origin: Point3::origin(),
+            direction: Vector3::z(),
+            vop: Arc::new(VOP {
+                ior: 1.0,
+                abs: [0.0; 3],
+            }),
+            abs: [0.0; 3],
+            depth: 0,
+            pixel: 0,
+            result: None,
+        }
+    }
 }
 
 impl Ray {
@@ -254,6 +274,7 @@ mod tests {
                 direction: -Vector3::z(),
                 vop: air,
                 abs: [0.0; 3],
+                ..Default::default()
             };
             downward_ray.bounce_unchecked(&plane, &Point3::origin());
             assert_eq!(downward_ray.direction.normalize(), -Vector3::z());
@@ -270,6 +291,7 @@ mod tests {
                 direction: Vector3::new(-1.0, 0.0, -1.0),
                 vop: air,
                 abs: [0.0; 3],
+                ..Default::default()
             };
             let mut ray = original_ray.clone();
             let intersection = plane.intersection(&original_ray).unwrap();
@@ -300,6 +322,7 @@ mod tests {
                 direction: Vector3::new(-0.2, 0.0, 1.0),
                 vop: glass,
                 abs: [0.0; 3],
+                ..Default::default()
             };
             let intersection = plane.intersection(&original_ray).unwrap();
             let mut ray = original_ray.clone();
@@ -325,6 +348,7 @@ mod tests {
                 direction: Vector3::new(-1.0, 0.0, -1.0),
                 vop: air,
                 abs: [0.0; 3],
+                ..Default::default()
             };
             ray.bounce_unchecked(&sphere, &Point3::origin());
             assert_eq!(ray.origin, Point3::origin());
@@ -350,6 +374,7 @@ mod tests {
                 direction: Vector3::new(0.0, 0.0, -1.0),
                 vop,
                 abs: [0.0; 3],
+                ..Default::default()
             }
         }
 

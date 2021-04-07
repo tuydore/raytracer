@@ -186,20 +186,12 @@ mod tests {
     #[cfg(test)]
     mod ray_intersections {
         use super::*;
-        use crate::VOP;
-        use std::sync::Arc;
 
         #[test]
         fn bottom_disk_surface() {
-            let air = VOP {
-                ior: 1.0,
-                abs: [0.0, 0.0, 0.0],
-            };
             let ray = Ray {
                 origin: Point3::new(0.25, 0.25, -1.0),
-                direction: Vector3::z(),
-                vop: Arc::new(air),
-                abs: [0.0, 0.0, 0.0],
+                ..Default::default()
             };
             let cyl = cylinder();
             assert!(
@@ -210,15 +202,9 @@ mod tests {
 
         #[test]
         fn top_disk_surface() {
-            let air = VOP {
-                ior: 1.0,
-                abs: [0.0, 0.0, 0.0],
-            };
             let ray = Ray {
                 origin: Point3::new(0.25, 0.25, 5.0),
-                direction: Vector3::z(),
-                vop: Arc::new(air),
-                abs: [0.0, 0.0, 0.0],
+                ..Default::default()
             };
             let cyl = cylinder();
             assert!(
@@ -229,15 +215,10 @@ mod tests {
 
         #[test]
         fn side_intersection() {
-            let air = VOP {
-                ior: 1.0,
-                abs: [0.0, 0.0, 0.0],
-            };
             let ray = Ray {
                 origin: Point3::new(-10.0, 0.0, 5.0),
                 direction: Vector3::x(),
-                vop: Arc::new(air),
-                abs: [0.0, 0.0, 0.0],
+                ..Default::default()
             };
             let cyl = cylinder();
             assert!(

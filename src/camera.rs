@@ -171,6 +171,7 @@ impl Camera {
                 direction: self.screen_local_to_world * sbpxc - self.origin,
                 vop: self.vop.clone(),
                 abs: [0.0; 3],
+                ..Default::default()
             })
             .collect();
         println!(
