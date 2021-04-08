@@ -1,6 +1,7 @@
 use crate::{camera::save_jpg, Camera, Ray, Surface, SOP};
 use nalgebra::Point3;
 use prettytable::{cell, row, Table};
+use rayon::iter::Either;
 use rayon::prelude::*;
 use std::time::Instant;
 use std::{sync::Arc, time::Duration};
@@ -26,7 +27,7 @@ fn one_surface_many_rays(surface: &Surf, rays: &[Ray]) -> Vec<Interaction> {
 fn many_surfaces_many_rays(surfaces: &[Surf], rays: &[Ray]) -> Vec<IndexedInteraction> {
     // all surfaces x rays interactions
     let interactions: Vec<Vec<Interaction>> = surfaces
-        .iter()
+        .par_iter()
         .map(|s| one_surface_many_rays(s, rays))
         .collect();
 
@@ -89,61 +90,31 @@ fn one_ray_interaction(ray: &mut Ray, point: Point3<f64>, dsq: f64, surface: &Su
     }
 }
 
-/// Traces all rays through the system once, adding completed ones to the bucket of finished rays.
 fn many_rays_interactions(
-    rays: &mut Vec<Ray>,
-    surfaces: &[Surf],
-    mut indexed_interactions: Vec<IndexedInteraction>,
-    completed_rays: &mut Vec<Ray>,
-) {
-    let mut ray_idx: usize = 0;
-    while ray_idx != rays.len() {
-        match indexed_interactions[ray_idx] {
-            None => {
-                // set the result to dark and move the ray to the completed stack
-                rays[ray_idx].result = Some([0; 3]);
-                completed_rays.push(rays.remove(ray_idx));
-                indexed_interactions.remove(ray_idx);
-            }
-            Some((p, dsq, si)) => {
-                if one_ray_interaction(&mut rays[ray_idx], p, dsq, &surfaces[si]) {
-                    completed_rays.push(rays.remove(ray_idx));
-                    indexed_interactions.remove(ray_idx);
-                } else {
-                    ray_idx += 1;
-                }
-            }
-        };
-    }
-}
-
-fn many_rays_interactions2(
     rays: Vec<Ray>,
     surfaces: &[Surf],
     indexed_interactions: Vec<IndexedInteraction>,
     completed_rays: &mut Vec<Ray>,
 ) -> Vec<Ray> {
     // split into no interactions and interactions
-    let mut no_interactions: Vec<Ray> = Vec::new();
-    let mut has_interactions: Vec<(Ray, Point3<f64>, f64, &Surf)> = Vec::new();
-    for (mut ray, idxi) in rays.into_iter().zip(indexed_interactions.into_iter()) {
-        match idxi {
-            None => {
+    let (mut no_interactions, new_rays): (Vec<Ray>, Vec<Ray>) = rays
+        .into_par_iter()
+        .zip(indexed_interactions)
+        .partition_map(|(mut ray, idxi)| {
+            // if the ray does intersect a surface
+            if let Some((point, dsq, i)) = idxi {
+                // if the next intersection ends the ray's journey
+                if one_ray_interaction(&mut ray, point, dsq, &surfaces[i]) {
+                    Either::Left(ray)
+                } else {
+                    Either::Right(ray)
+                }
+            // kill rays with no further intersection
+            } else {
                 ray.result = Some([0; 3]);
-                no_interactions.push(ray);
+                Either::Left(ray)
             }
-            Some((p, d, i)) => has_interactions.push((ray, p, d, &surfaces[i])),
-        }
-    }
-
-    let mut new_rays = Vec::new();
-    for (mut ray, point, dsq, sref) in has_interactions.into_iter() {
-        if one_ray_interaction(&mut ray, point, dsq, sref) {
-            no_interactions.push(ray);
-        } else {
-            new_rays.push(ray);
-        }
-    }
+        });
 
     // add no interactions to completed
     completed_rays.append(&mut no_interactions);
@@ -169,7 +140,7 @@ pub fn trace_rays(mut rays: Vec<Ray>, surfaces: &[Surf]) -> (Vec<Ray>, Duration,
 
         // update rays according to their interactions
         t0 = Instant::now();
-        rays = many_rays_interactions2(rays, surfaces, indexed_interactions, &mut completed_rays);
+        rays = many_rays_interactions(rays, surfaces, indexed_interactions, &mut completed_rays);
         interactions += t0.elapsed();
     }
     (completed_rays, intersections, interactions)
@@ -199,7 +170,7 @@ pub fn raytrace(camera: &Camera, scene: &[Surf], filepath: &str) {
     let total_time =
         ray_generation_time_s + ray_trace_time_s + ray_process_time_s + file_save_time_s;
     let mut table = Table::new();
-    table.add_row(row!["OPERATION", "TIME (s)", "TIME (%)"]);
+    table.add_row(row![Fgb => "OPERATION", "TIME (s)", "TIME (%)"]);
     table.add_row(row!["Total", &format!("{:.2}", total_time), "100.0"]);
     table.add_row(row![
         "Ray Generation",
@@ -211,12 +182,12 @@ pub fn raytrace(camera: &Camera, scene: &[Surf], filepath: &str) {
         &format!("{:.2}", ray_trace_time_s),
         &format!("{:.2}", (ray_trace_time_s / total_time * 100.0))
     ]);
-    table.add_row(row![
+    table.add_row(row![Fy =>
         ">> Ray Intersections",
         &format!("{:.2}", intersections_time),
         &format!("{:.2}", (intersections_time / total_time * 100.0))
     ]);
-    table.add_row(row![
+    table.add_row(row![Fy =>
         ">> Ray Interactions",
         &format!("{:.2}", interactions_time),
         &format!("{:.2}", (interactions_time / total_time * 100.0))
