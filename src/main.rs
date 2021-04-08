@@ -1,3 +1,5 @@
+use raytracer::trace::{raytrace, read_ray_data};
+
 use {
     rayon::ThreadPoolBuilder,
     raytracer::{
@@ -125,7 +127,7 @@ fn extract_surfaces(
     surface_list
 }
 
-fn raytrace(camera: &Camera, scene: &[Arc<dyn Surface + Send + Sync>], filepath: &str) {
+fn raytrace_old(camera: &Camera, scene: &[Arc<dyn Surface + Send + Sync>], filepath: &str) {
     let rays: Vec<Ray> = camera.create_rays();
     save_jpg(
         filepath,

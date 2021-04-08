@@ -135,12 +135,14 @@ impl Camera {
         )
     }
 
-    fn subpixel_centers(&self) -> Vec<Point3<f64>> {
+    /// Return centers of all subpixels and their corresponding pixel number.
+    fn subpixel_centers(&self) -> Vec<(Point3<f64>, usize)> {
         let pixel_size_x: f64 = self.size_x / self.num_x as f64;
         let pixel_size_y: f64 = self.size_y / self.num_y as f64;
         self.pixel_corners()
             .into_iter()
-            .map(|pxc| {
+            .enumerate()
+            .map(|(pixel_idx, pxc)| {
                 split_rectangle(
                     pxc,
                     pixel_size_x,
@@ -149,6 +151,8 @@ impl Camera {
                     self.antialiasing,
                     false,
                 )
+                .into_iter()
+                .map(move |p| (p, pixel_idx))
             })
             .flatten()
             .collect()
@@ -166,11 +170,12 @@ impl Camera {
         let rays: Vec<Ray> = self
             .subpixel_centers()
             .into_iter()
-            .map(|sbpxc| Ray {
+            .map(|(sbpxc, pixel_idx)| Ray {
                 origin: self.origin,
                 direction: self.screen_local_to_world * sbpxc - self.origin,
                 vop: self.vop.clone(),
                 abs: [0.0; 3],
+                pixel_idx,
                 ..Default::default()
             })
             .collect();
@@ -299,7 +304,8 @@ mod tests {
         let centers = c.subpixel_centers();
         assert_eq!(centers.len(), 1);
         assert!(
-            (c.screen_local_to_world * centers[0] - Point3::new(0.0, 1.0, 0.0)).norm() < TOLERANCE
+            (c.screen_local_to_world * centers[0].0 - Point3::new(0.0, 1.0, 0.0)).norm()
+                < TOLERANCE
         );
     }
 }

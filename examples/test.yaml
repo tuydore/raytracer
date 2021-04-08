@@ -4,10 +4,10 @@ camera:
   origin: [0.0, -20.0, 0.0]
   gaze: [0.0, 1.0, 0.0]
   up: [0.0, 0.0, 1.0]  # up must be orthogonal to gaze
-  fov: [18.0, 32.0]
-  density: 20.0
+  fov: [18, 32]
+  density: 5
   vop: air
-  antialiasing: 3
+  antialiasing: 1
 
 volumes:
   air:
@@ -20,7 +20,7 @@ surfaces:
     center: [0, 0, 0]
     radius: 1000
     sop:
-      light: [255, 255, 255]
+      light: [200, 200, 200]
     vop_above: air
     vop_below: air
 
@@ -28,7 +28,8 @@ surfaces:
     center: [0, 4, 0]
     radius: 2
     sop:
-      light: [255, 100, 0]
+      reflect: null
+      # light: [255, 100, 0]
     vop_above: air
     vop_below: air
 

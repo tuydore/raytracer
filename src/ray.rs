@@ -11,7 +11,7 @@ pub struct Ray {
     pub vop: Arc<VOP>,
     pub abs: [f64; 3], // TODO: ray absorption when ray has no more intersections?
     pub depth: usize,
-    pub pixel: usize,
+    pub pixel_idx: usize,
     pub result: Option<[usize; 3]>,
 }
 
@@ -26,7 +26,7 @@ impl Default for Ray {
             }),
             abs: [0.0; 3],
             depth: 0,
-            pixel: 0,
+            pixel_idx: 0,
             result: None,
         }
     }

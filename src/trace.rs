@@ -1,7 +1,9 @@
-use crate::{Ray, Surface, SOP};
+use crate::{camera::save_jpg, Camera, Ray, Surface, SOP};
 use nalgebra::Point3;
+use prettytable::{cell, row, Table};
 use rayon::prelude::*;
-use std::sync::Arc;
+use std::time::Instant;
+use std::{sync::Arc, time::Duration};
 
 type Surf = Arc<dyn Surface + Send + Sync>;
 type Interaction = Option<(Point3<f64>, f64)>;
@@ -91,7 +93,7 @@ fn one_ray_interaction(ray: &mut Ray, point: Point3<f64>, dsq: f64, surface: &Su
 fn many_rays_interactions(
     rays: &mut Vec<Ray>,
     surfaces: &[Surf],
-    indexed_interactions: Vec<IndexedInteraction>,
+    mut indexed_interactions: Vec<IndexedInteraction>,
     completed_rays: &mut Vec<Ray>,
 ) {
     let mut ray_idx: usize = 0;
@@ -101,10 +103,12 @@ fn many_rays_interactions(
                 // set the result to dark and move the ray to the completed stack
                 rays[ray_idx].result = Some([0; 3]);
                 completed_rays.push(rays.remove(ray_idx));
+                indexed_interactions.remove(ray_idx);
             }
             Some((p, dsq, si)) => {
                 if one_ray_interaction(&mut rays[ray_idx], p, dsq, &surfaces[si]) {
                     completed_rays.push(rays.remove(ray_idx));
+                    indexed_interactions.remove(ray_idx);
                 } else {
                     ray_idx += 1;
                 }
@@ -114,19 +118,124 @@ fn many_rays_interactions(
 }
 
 /// Trace all rays through the system until no more are left.
-fn trace(mut rays: Vec<Ray>, surfaces: &[Surf]) -> Vec<Ray> {
+pub fn trace_rays(mut rays: Vec<Ray>, surfaces: &[Surf]) -> (Vec<Ray>, Duration, Duration) {
     let mut completed_rays: Vec<Ray> = Vec::new();
     let mut indexed_interactions: Vec<IndexedInteraction>;
+
+    let mut t0: Instant;
+    let mut intersections: Duration = Duration::new(0, 0);
+    let mut interactions: Duration = Duration::new(0, 0);
+
     while !rays.is_empty() {
+        println!("Rays left in stack: {}", rays.len());
+        t0 = Instant::now();
         indexed_interactions = many_surfaces_many_rays(surfaces, &rays);
+        intersections += t0.elapsed();
+        t0 = Instant::now();
         many_rays_interactions(
             &mut rays,
             surfaces,
             indexed_interactions,
             &mut completed_rays,
-        )
+        );
+        interactions += t0.elapsed();
     }
-    completed_rays
+    (completed_rays, intersections, interactions)
+}
+
+pub fn raytrace(camera: &Camera, scene: &[Surf], filepath: &str) {
+    let mut t0 = Instant::now();
+
+    let rays: Vec<Ray> = camera.create_rays();
+    let ray_generation_time_s = t0.elapsed().as_nanos() as f64 / 1e9;
+    t0 = Instant::now();
+
+    let (traced_rays, intersections_time, interactions_time) = trace_rays(rays, scene);
+    let ray_trace_time_s = t0.elapsed().as_nanos() as f64 / 1e9;
+    let intersections_time = intersections_time.as_nanos() as f64 / 1e9;
+    let interactions_time = interactions_time.as_nanos() as f64 / 1e9;
+    t0 = Instant::now();
+
+    let ray_data: Vec<[u8; 3]> = read_ray_data(traced_rays);
+    let ray_process_time_s = t0.elapsed().as_nanos() as f64 / 1e9;
+    t0 = Instant::now();
+
+    save_jpg(filepath, ray_data, camera.num_x, camera.num_y);
+    let file_save_time_s = t0.elapsed().as_nanos() as f64 / 1e9;
+
+    // show breakdown of time
+    let total_time =
+        ray_generation_time_s + ray_trace_time_s + ray_process_time_s + file_save_time_s;
+    let mut table = Table::new();
+    table.add_row(row!["OPERATION", "TIME (s)", "TIME (%)"]);
+    table.add_row(row!["Total", &format!("{:.2}", total_time), "100.0"]);
+    table.add_row(row![
+        "Ray Generation",
+        &format!("{:.2}", ray_generation_time_s),
+        &format!("{:.2}", (ray_generation_time_s / total_time * 100.0))
+    ]);
+    table.add_row(row![
+        "Ray Trace",
+        &format!("{:.2}", ray_trace_time_s),
+        &format!("{:.2}", (ray_trace_time_s / total_time * 100.0))
+    ]);
+    table.add_row(row![
+        ">> Ray Intersections",
+        &format!("{:.2}", intersections_time),
+        &format!("{:.2}", (intersections_time / total_time * 100.0))
+    ]);
+    table.add_row(row![
+        ">> Ray Interactions",
+        &format!("{:.2}", interactions_time),
+        &format!("{:.2}", (interactions_time / total_time * 100.0))
+    ]);
+    table.add_row(row![
+        "Ray Processing",
+        &format!("{:.2}", ray_process_time_s),
+        &format!("{:.2}", (ray_process_time_s / total_time * 100.0))
+    ]);
+    table.add_row(row![
+        "File Save",
+        &format!("{:.2}", file_save_time_s),
+        &format!("{:.2}", (file_save_time_s / total_time * 100.0))
+    ]);
+    table.printstd();
+}
+
+pub fn read_ray_data(mut rays: Vec<Ray>) -> Vec<[u8; 3]> {
+    println!("Merging ray data...");
+    rays.sort_unstable_by_key(|r| r.pixel_idx);
+    let mut result: Vec<[u8; 3]> = Vec::new();
+    let mut current_pixel_idx: usize = 0;
+    let mut num_subpixels: usize = 0;
+    let mut total_value: [usize; 3] = [0; 3];
+    let mut total_value_u8: [u8; 3] = [0; 3];
+    for ray in rays.iter() {
+        if ray.pixel_idx != current_pixel_idx {
+            for i in 0..=2 {
+                total_value_u8[i] = (total_value[i] / num_subpixels) as u8;
+            }
+            result.push(total_value_u8);
+            num_subpixels = 0;
+            total_value = [0; 3];
+            current_pixel_idx += 1;
+        }
+        for (rx, tvx) in ray
+            .result
+            .expect("Ray did not have a result.")
+            .iter()
+            .zip(total_value.iter_mut())
+        {
+            *tvx += rx;
+        }
+        num_subpixels += 1;
+    }
+    // TODO: clean up this duplicate
+    for i in 0..=2 {
+        total_value_u8[i] = (total_value[i] / num_subpixels) as u8;
+    }
+    result.push(total_value_u8);
+    result
 }
 
 #[cfg(test)]
@@ -175,7 +284,7 @@ mod tests {
         vop_map.insert(
             "colored_air".to_owned(),
             Arc::new(VOP {
-                abs: [0.01, 0.05, 0.1],
+                abs: [0.01, 0.05, 0.0],
                 ..Default::default()
             }),
         );
@@ -189,7 +298,7 @@ mod tests {
         vop_map
     }
 
-    fn test_with_sop(sop: Option<SOP>) {
+    fn test_with_sop(sop: Option<SOP>) -> Vec<Ray> {
         let vop_map = default_vop_map();
         let rays = default_camera(&vop_map).create_rays();
 
@@ -200,30 +309,60 @@ mod tests {
             scene.push(default_sphere(&vop_map, x));
         }
         // check all rays have traced
-        assert!(trace(rays, &scene).iter().all(|r| r.result.is_some()));
+        let (traced, _, _) = trace_rays(rays, &scene);
+        assert!(traced.iter().all(|r| r.result.is_some()));
+        traced
     }
 
     #[test]
     fn trace_colored_air() {
-        test_with_sop(None)
+        test_with_sop(None);
     }
 
     #[test]
     fn trace_light() {
-        test_with_sop(Some(SOP::Light(200, 200, 100)))
+        test_with_sop(Some(SOP::Light(200, 200, 100)));
     }
 
     #[test]
     fn trace_reflection() {
-        test_with_sop(Some(SOP::Reflect))
+        test_with_sop(Some(SOP::Reflect));
     }
     #[test]
     fn trace_refraction() {
-        test_with_sop(Some(SOP::Refract))
+        test_with_sop(Some(SOP::Refract));
     }
 
     #[test]
     fn trace_dark() {
-        test_with_sop(Some(SOP::Dark))
+        test_with_sop(Some(SOP::Dark));
+    }
+
+    #[test]
+    fn ray_data() {
+        let rays = test_with_sop(None);
+        read_ray_data(rays);
+    }
+
+    #[test]
+    fn correct_intersection() {
+        let vop_map = default_vop_map();
+        let rays = default_camera(&vop_map).create_rays();
+        let plane = PlaneBuilder {
+            origin: [5.0, 0.0, 0.0],
+            normal: [-1.0, 0.0, 0.0],
+            sop: SOP::Light(255, 255, 255),
+            vop_below: "colored_air".to_owned(),
+            vop_above: "colored_air".to_owned(),
+        }
+        .build(&vop_map);
+
+        let mut scene: Vec<Surf> = Vec::new();
+        scene.push(plane);
+        scene.push(default_sphere(&vop_map, SOP::Light(60, 60, 60)));
+        // check all rays have traced
+        let (traced, _, _) = trace_rays(rays, &scene);
+        assert!(traced.iter().all(|r| r.result.is_some()));
+        assert_eq!(traced[0].result.unwrap()[2], 60);
     }
 }
