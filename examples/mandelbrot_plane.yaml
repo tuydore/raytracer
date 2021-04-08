@@ -5,9 +5,9 @@ camera:
   gaze: [1.0, 0.0, 0.0]
   up: [0.0, 0.0, 1.0]
   fov: [20.0, 32.0]
-  density: 20.0
+  density: 200.0
   vop: air
-  antialiasing: 1
+  antialiasing: 2
 
 volumes:
   air:

@@ -13,7 +13,7 @@ num-complex = "0.3"
 nalgebra = "0.24"
 colorgrad = "0.3"
 prettytable-rs = "0.8.0"
-# itertools = "0.10"
+itertools = "0.10"
 
 [dependencies.serde]
 version = "1.0"

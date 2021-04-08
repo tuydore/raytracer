@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 use {
     crate::{ray::BounceResult, Ray, Surface, VOP},
     image::{Rgb, RgbImage},
@@ -20,25 +22,20 @@ fn split_rectangle(
     num_y: usize,
     corners: bool,
 ) -> Vec<Point3<f64>> {
-    let mut points: Vec<Point3<f64>> = Vec::new();
-    let mut v: Vector3<f64>;
-
     // spacing between adjacent points on the grid
     let dx: f64 = size_x / num_x as f64;
     let dy: f64 = size_y / num_y as f64;
 
-    for i in 0..num_x {
-        for j in 0..num_y {
-            v = Vector3::new(i as f64 * dx, j as f64 * dy, 0.0);
-            // add half-spacing to obtain centers of subgrid
-            if !corners {
-                v.x += dx / 2.0;
-                v.y += dy / 2.0;
+    (0..num_x)
+        .cartesian_product(0..num_y)
+        .map(|(i, j)| {
+            if corners {
+                corner + Vector3::new(i as f64 * dx, j as f64 * dy, 0.0)
+            } else {
+                corner + Vector3::new((i as f64 + 0.5) * dx, (j as f64 + 0.5) * dy, 0.0)
             }
-            points.push(corner + v);
-        }
-    }
-    points
+        })
+        .collect()
 }
 
 /// Trace a number of rays through the given scene and return their final color values.
@@ -140,9 +137,9 @@ impl Camera {
         let pixel_size_x: f64 = self.size_x / self.num_x as f64;
         let pixel_size_y: f64 = self.size_y / self.num_y as f64;
         self.pixel_corners()
-            .into_iter()
+            .into_par_iter()
             .enumerate()
-            .map(|(pixel_idx, pxc)| {
+            .flat_map_iter(|(pixel_idx, pxc)| {
                 split_rectangle(
                     pxc,
                     pixel_size_x,
@@ -154,7 +151,6 @@ impl Camera {
                 .into_iter()
                 .map(move |p| (p, pixel_idx))
             })
-            .flatten()
             .collect()
     }
 
@@ -169,7 +165,7 @@ impl Camera {
         let t0 = Instant::now();
         let rays: Vec<Ray> = self
             .subpixel_centers()
-            .into_iter()
+            .into_par_iter()
             .map(|(sbpxc, pixel_idx)| Ray {
                 origin: self.origin,
                 direction: self.screen_local_to_world * sbpxc - self.origin,
