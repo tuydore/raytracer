@@ -5,7 +5,7 @@ camera:
   gaze: [0.0, 1.0, 0.0]
   up: [0.0, 0.0, 1.0]  # up must be orthogonal to gaze
   fov: [18, 32]
-  density: 5
+  density: 20
   vop: air
   antialiasing: 1
 

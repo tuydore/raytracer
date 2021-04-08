@@ -117,6 +117,39 @@ fn many_rays_interactions(
     }
 }
 
+fn many_rays_interactions2(
+    rays: Vec<Ray>,
+    surfaces: &[Surf],
+    indexed_interactions: Vec<IndexedInteraction>,
+    completed_rays: &mut Vec<Ray>,
+) -> Vec<Ray> {
+    // split into no interactions and interactions
+    let mut no_interactions: Vec<Ray> = Vec::new();
+    let mut has_interactions: Vec<(Ray, Point3<f64>, f64, &Surf)> = Vec::new();
+    for (mut ray, idxi) in rays.into_iter().zip(indexed_interactions.into_iter()) {
+        match idxi {
+            None => {
+                ray.result = Some([0; 3]);
+                no_interactions.push(ray);
+            }
+            Some((p, d, i)) => has_interactions.push((ray, p, d, &surfaces[i])),
+        }
+    }
+
+    let mut new_rays = Vec::new();
+    for (mut ray, point, dsq, sref) in has_interactions.into_iter() {
+        if one_ray_interaction(&mut ray, point, dsq, sref) {
+            no_interactions.push(ray);
+        } else {
+            new_rays.push(ray);
+        }
+    }
+
+    // add no interactions to completed
+    completed_rays.append(&mut no_interactions);
+    new_rays
+}
+
 /// Trace all rays through the system until no more are left.
 pub fn trace_rays(mut rays: Vec<Ray>, surfaces: &[Surf]) -> (Vec<Ray>, Duration, Duration) {
     let mut completed_rays: Vec<Ray> = Vec::new();
@@ -128,16 +161,15 @@ pub fn trace_rays(mut rays: Vec<Ray>, surfaces: &[Surf]) -> (Vec<Ray>, Duration,
 
     while !rays.is_empty() {
         println!("Rays left in stack: {}", rays.len());
+
+        // calculate all intersections with all surfaces
         t0 = Instant::now();
         indexed_interactions = many_surfaces_many_rays(surfaces, &rays);
         intersections += t0.elapsed();
+
+        // update rays according to their interactions
         t0 = Instant::now();
-        many_rays_interactions(
-            &mut rays,
-            surfaces,
-            indexed_interactions,
-            &mut completed_rays,
-        );
+        rays = many_rays_interactions2(rays, surfaces, indexed_interactions, &mut completed_rays);
         interactions += t0.elapsed();
     }
     (completed_rays, intersections, interactions)
