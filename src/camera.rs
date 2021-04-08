@@ -184,14 +184,28 @@ impl Camera {
 
 #[derive(Debug, Deserialize)]
 pub struct CameraBuilder {
-    origin: [f64; 3],
-    gaze: [f64; 3],
-    up: [f64; 3],
-    fov: [f64; 2],
-    density: f64,
+    pub origin: [f64; 3],
+    pub gaze: [f64; 3],
+    pub up: [f64; 3],
+    pub fov: [f64; 2],
+    pub density: f64,
     #[serde(default = "default_antialiasing")]
-    antialiasing: usize,
-    vop: String,
+    pub antialiasing: usize,
+    pub vop: String,
+}
+
+impl Default for CameraBuilder {
+    fn default() -> Self {
+        Self {
+            origin: [0.0; 3],
+            gaze: [1.0, 0.0, 0.0],
+            up: [0.0, 0.0, 1.0],
+            fov: [5.0, 5.0],
+            density: 1.0,
+            antialiasing: 1,
+            vop: "air".to_owned(),
+        }
+    }
 }
 
 fn default_antialiasing() -> usize {

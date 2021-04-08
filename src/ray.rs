@@ -12,7 +12,7 @@ pub struct Ray {
     pub abs: [f64; 3], // TODO: ray absorption when ray has no more intersections?
     pub depth: usize,
     pub pixel: usize,
-    pub result: Option<[u8; 3]>,
+    pub result: Option<[usize; 3]>,
 }
 
 impl Default for Ray {
@@ -79,7 +79,7 @@ impl Ray {
     /// If no errors are found, return intersection point, that normal and the above & below VOPs.
     /// Otherwise return an error.
     #[allow(clippy::type_complexity)]
-    fn get_interaction_parameters_unchecked(
+    pub fn get_interaction_parameters_unchecked(
         &self,
         surface: &dyn Surface,
         point: &Point3<f64>,
@@ -159,14 +159,14 @@ impl Ray {
     }
 
     /// Reflect a ray in a surface.
-    fn reflect(&mut self, intersection: &Point3<f64>, normal: &Vector3<f64>) {
+    pub fn reflect(&mut self, intersection: &Point3<f64>, normal: &Vector3<f64>) {
         self.origin = *intersection;
         self.direction += 2.0 * self.direction.dot(&normal).abs() / normal.norm_squared() * *normal;
     }
 
     /// Refract a ray in a surface.
     /// Reference: https://graphics.stanford.edu/courses/cs148-10-summer/docs/2006--degreve--reflection_refraction.pdf
-    fn refract(
+    pub fn refract(
         &mut self,
         intersection: &Point3<f64>,
         normal: &Vector3<f64>,

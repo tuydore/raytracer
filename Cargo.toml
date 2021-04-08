@@ -12,6 +12,7 @@ num_cpus = "1.13"
 num-complex = "0.3"
 nalgebra = "0.24"
 colorgrad = "0.3"
+# itertools = "0.10"
 
 [dependencies.serde]
 version = "1.0"
