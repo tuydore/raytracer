@@ -1,4 +1,5 @@
 use crate::{camera::save_jpg, Camera, Ray, Surface, SOP};
+use indicatif::ProgressBar;
 use nalgebra::Point3;
 use prettytable::{cell, row, Table};
 use rayon::iter::Either;
@@ -129,8 +130,11 @@ pub fn trace_rays(mut rays: Vec<Ray>, surfaces: &[Surf]) -> (Vec<Ray>, Duration,
     let mut intersections: Duration = Duration::new(0, 0);
     let mut interactions: Duration = Duration::new(0, 0);
 
+    let bar = ProgressBar::new(rays.len() as u64);
     while !rays.is_empty() {
-        println!("Rays left in stack: {}", rays.len());
+        let total = rays.len() + completed_rays.len();
+        bar.set_length(total as u64);
+        bar.set_position((total - rays.len()) as u64);
 
         // calculate all intersections with all surfaces
         t0 = Instant::now();

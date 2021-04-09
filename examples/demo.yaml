@@ -1,5 +1,5 @@
 filepath: "examples/demo.jpg"
-threads: 12
+threads: 4
 
 camera:
   origin: [0.0, 0.0, 0.0]
