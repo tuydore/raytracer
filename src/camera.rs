@@ -156,13 +156,12 @@ impl Camera {
 
     pub fn create_rays(&self) -> Vec<Ray> {
         let num_pixels: usize = self.num_x * self.num_y;
-        print!(
+        println!(
             "Generating {} x {}^2 = {} rays... ",
             num_pixels,
             self.antialiasing,
             num_pixels * self.antialiasing.pow(2)
         );
-        let t0 = Instant::now();
         let rays: Vec<Ray> = self
             .subpixel_centers()
             .into_par_iter()
@@ -175,10 +174,6 @@ impl Camera {
                 ..Default::default()
             })
             .collect();
-        println!(
-            "done! Total time: {}s.",
-            t0.elapsed().as_millis() as f64 / 1000.0
-        );
         rays
     }
 }

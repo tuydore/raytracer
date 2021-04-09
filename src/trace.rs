@@ -36,14 +36,13 @@ fn many_surfaces_many_rays(surfaces: &[Surf], rays: &[Ray]) -> Vec<IndexedIntera
 
     let mut closest_distance_squared: &f64;
     // TODO: multithread this
-    for ri in 0..rays.len() {
+    for (ri, indexed_interaction) in positional_interactions.iter_mut().enumerate() {
         closest_distance_squared = &f64::MAX;
-        for si in 0..surfaces.len() {
-            // TODO: turn to unchecked
-            if let Some(x) = &interactions[si][ri] {
+        for (si, interaction) in interactions.iter().enumerate() {
+            if let Some(x) = interaction[ri] {
                 if x.1 < *closest_distance_squared {
-                    positional_interactions[ri] = Some((x.0, x.1, si));
-                    closest_distance_squared = &positional_interactions[ri].as_ref().unwrap().1;
+                    *indexed_interaction = Some((x.0, x.1, si));
+                    closest_distance_squared = &indexed_interaction.as_ref().unwrap().1;
                 }
             }
         }
@@ -206,6 +205,7 @@ pub fn raytrace(camera: &Camera, scene: &[Surf], filepath: &str) {
 }
 
 pub fn process_ray_data(rays: Vec<Ray>, num_pixels: usize) -> Vec<[u8; 3]> {
+    println!("Merging...");
     // pixel number as index => (number of components, sum of components)
     let mut pixel_values = vec![(0, [0; 3]); num_pixels];
 

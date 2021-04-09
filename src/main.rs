@@ -127,6 +127,7 @@ fn extract_surfaces(
     surface_list
 }
 
+#[allow(dead_code)] // TODO: remove this once new method is fully implemented
 fn raytrace_old(camera: &Camera, scene: &[Arc<dyn Surface + Send + Sync>], filepath: &str) {
     let rays: Vec<Ray> = camera.create_rays();
     save_jpg(

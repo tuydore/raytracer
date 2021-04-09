@@ -7,7 +7,7 @@ camera:
   fov: [20.0, 32.0]
   density: 200.0
   vop: air
-  antialiasing: 2
+  antialiasing: 1
 
 volumes:
   air:
