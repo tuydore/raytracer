@@ -1,6 +1,7 @@
 use crate::{camera::save_jpg, Camera, Ray, Surface, SOP};
 use indicatif::ProgressBar;
 use nalgebra::Point3;
+use ordered_float::NotNan;
 use prettytable::{cell, row, Table};
 use rayon::iter::Either;
 use rayon::prelude::*;
@@ -26,30 +27,49 @@ fn one_surface_many_rays(surface: &Surf, rays: &[Ray]) -> Vec<Interaction> {
 /// Calculate interactions between all surfaces and all rays and determine the closest point of
 /// interaction for each ray, the squared distance to it and the surface index it corresponds to.
 fn many_surfaces_many_rays(surfaces: &[Surf], rays: &[Ray]) -> Vec<IndexedInteraction> {
-    // all surfaces x rays interactions
+    // num_surfaces chunks of len num_rays
     // TODO: flatten this and then pick every other element
-    let interactions: Vec<Vec<Interaction>> = surfaces
+    let interactions: Vec<Interaction> = surfaces
         .par_iter()
-        .map(|s| one_surface_many_rays(s, rays))
+        .flat_map(|s| one_surface_many_rays(s, rays))
         .collect();
 
     // contains the nearest interaction and the index of the surface it involves, if any
-    let mut positional_interactions: Vec<IndexedInteraction> = vec![None; rays.len()];
+    // let mut positional_interactions: Vec<IndexedInteraction> = vec![None; rays.len()];
 
-    let mut closest_distance_squared: &f64;
-    // TODO: multithread this
-    for (ri, indexed_interaction) in positional_interactions.iter_mut().enumerate() {
-        closest_distance_squared = &f64::MAX;
-        for (si, interaction) in interactions.iter().enumerate() {
-            if let Some(x) = interaction[ri] {
-                if x.1 < *closest_distance_squared {
-                    *indexed_interaction = Some((x.0, x.1, si));
-                    closest_distance_squared = &indexed_interaction.as_ref().unwrap().1;
-                }
-            }
-        }
-    }
-    positional_interactions
+    // BUG: this misses some surfaces...
+    (0..rays.len())
+        .into_iter()
+        .map(|ri| {
+            interactions
+                .iter()
+                .skip(ri)
+                .step_by(rays.len())
+                .filter_map(|x| x.as_ref())
+                // .map(|x| x.unwrap())
+                .enumerate()
+                // .map(|(si, (p, dsq))| (si, (p, NotNan::new(dsq))))
+                .min_by_key(|&(_, (_, dsq))| {
+                    NotNan::new(*dsq).expect("Invalid distance to surface.")
+                })
+                .map(|(si, (p, dsq))| (*p, *dsq, si))
+        })
+        .collect()
+
+    // let mut closest_distance_squared: &f64;
+    // // TODO: multithread this
+    // for (ri, indexed_interaction) in positional_interactions.iter_mut().enumerate() {
+    //     closest_distance_squared = &f64::MAX;
+    //     for (si, interaction) in interactions.iter().enumerate() {
+    //         if let Some(x) = interaction[ri] {
+    //             if x.1 < *closest_distance_squared {
+    //                 *indexed_interaction = Some((x.0, x.1, si));
+    //                 closest_distance_squared = &indexed_interaction.as_ref().unwrap().1;
+    //             }
+    //         }
+    //     }
+    // }
+    // positional_interactions
 }
 
 /// Processes a ray's journey through the optical system and
