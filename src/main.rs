@@ -1,4 +1,4 @@
-use raytracer::trace::{raytrace, read_ray_data};
+use raytracer::trace::raytrace;
 
 use {
     rayon::ThreadPoolBuilder,

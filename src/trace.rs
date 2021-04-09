@@ -159,7 +159,7 @@ pub fn raytrace(camera: &Camera, scene: &[Surf], filepath: &str) {
     let interactions_time = interactions_time.as_nanos() as f64 / 1e9;
     t0 = Instant::now();
 
-    let ray_data: Vec<[u8; 3]> = read_ray_data(traced_rays);
+    let ray_data: Vec<[u8; 3]> = process_ray_data(traced_rays, camera.num_x * camera.num_y);
     let ray_process_time_s = t0.elapsed().as_nanos() as f64 / 1e9;
     t0 = Instant::now();
 
@@ -205,42 +205,25 @@ pub fn raytrace(camera: &Camera, scene: &[Surf], filepath: &str) {
     table.printstd();
 }
 
-pub fn read_ray_data(mut rays: Vec<Ray>) -> Vec<[u8; 3]> {
-    println!("Merging ray data...");
-    rays.sort_unstable_by_key(|r| r.pixel_idx);
-    let mut result: Vec<[u8; 3]> = Vec::new();
-    let mut current_pixel_idx: usize = 0;
-    let mut num_subpixels: usize = 0;
-    let mut total_value: [usize; 3] = [0; 3];
-    let mut total_value_u8: [u8; 3] = [0; 3];
-    for ray in rays.iter() {
-        if ray.pixel_idx != current_pixel_idx {
-            for i in 0..=2 {
-                total_value_u8[i] = (total_value[i] / num_subpixels) as u8;
-            }
-            result.push(total_value_u8);
-            num_subpixels = 0;
-            total_value = [0; 3];
-            current_pixel_idx += 1;
-        }
-        for (rx, tvx) in ray
-            .result
-            .expect("Ray did not have a result.")
-            .iter()
-            .zip(total_value.iter_mut())
-        {
-            *tvx += rx;
-        }
-        num_subpixels += 1;
-    }
-    // TODO: clean up this duplicate
-    for i in 0..=2 {
-        total_value_u8[i] = (total_value[i] / num_subpixels) as u8;
-    }
-    result.push(total_value_u8);
-    result
-}
+pub fn process_ray_data(rays: Vec<Ray>, num_pixels: usize) -> Vec<[u8; 3]> {
+    // pixel number as index => (number of components, sum of components)
+    let mut pixel_values = vec![(0, [0; 3]); num_pixels];
 
+    // add to each
+    rays.into_iter().for_each(|ray| {
+        let x = &mut pixel_values[ray.pixel_idx];
+        x.0 += 1;
+        for i in 0..=2 {
+            x.1[i] += ray.result.expect("Ray did not have a result.")[i];
+        }
+    });
+
+    // QUESTION: is it worth parallelizing this? There doesn't seem to be much performance gain.
+    pixel_values
+        .into_iter()
+        .map(|(n, [r, g, b])| [(r / n) as u8, (g / n) as u8, (b / n) as u8])
+        .collect()
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -344,7 +327,7 @@ mod tests {
     #[test]
     fn ray_data() {
         let rays = test_with_sop(None);
-        read_ray_data(rays);
+        process_ray_data(rays, 25);
     }
 
     #[test]
