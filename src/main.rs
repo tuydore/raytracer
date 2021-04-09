@@ -1,4 +1,4 @@
-use raytracer::trace::raytrace;
+use raytracer::trace::render_scene;
 
 use {
     rayon::ThreadPoolBuilder,
@@ -162,6 +162,6 @@ fn main() {
         surfaces.len()
     );
 
-    raytrace(&camera, &surfaces, &filepath);
+    render_scene(&camera, &surfaces, &filepath);
     println!("Result saved: {}", filepath);
 }

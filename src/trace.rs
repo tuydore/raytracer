@@ -27,6 +27,7 @@ fn one_surface_many_rays(surface: &Surf, rays: &[Ray]) -> Vec<Interaction> {
 /// interaction for each ray, the squared distance to it and the surface index it corresponds to.
 fn many_surfaces_many_rays(surfaces: &[Surf], rays: &[Ray]) -> Vec<IndexedInteraction> {
     // all surfaces x rays interactions
+    // TODO: flatten this and then pick every other element
     let interactions: Vec<Vec<Interaction>> = surfaces
         .par_iter()
         .map(|s| one_surface_many_rays(s, rays))
@@ -149,7 +150,7 @@ pub fn trace_rays(mut rays: Vec<Ray>, surfaces: &[Surf]) -> (Vec<Ray>, Duration,
     (completed_rays, intersections, interactions)
 }
 
-pub fn raytrace(camera: &Camera, scene: &[Surf], filepath: &str) {
+pub fn render_scene(camera: &Camera, scene: &[Surf], filepath: &str) {
     let mut t0 = Instant::now();
 
     let rays: Vec<Ray> = camera.create_rays();
