@@ -13,6 +13,9 @@ volumes:
   air:
     ior: 1.0
     abs: [0.0, 0.0, 0.0]
+  glass:
+    ior: 1.5
+    abs: [0.0, 0.0, 0.0]
 
 surfaces:
   - type: mandelbrotplane
@@ -32,7 +35,7 @@ surfaces:
     sop:
       reflect: null
     vop_above: air
-    vop_below: air
+    vop_below: glass
 
   - type: plane
     origin: [0.0, 0.0, 3.0]

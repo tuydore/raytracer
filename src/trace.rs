@@ -34,42 +34,26 @@ fn many_surfaces_many_rays(surfaces: &[Surf], rays: &[Ray]) -> Vec<IndexedIntera
         .flat_map(|s| one_surface_many_rays(s, rays))
         .collect();
 
-    // contains the nearest interaction and the index of the surface it involves, if any
-    // let mut positional_interactions: Vec<IndexedInteraction> = vec![None; rays.len()];
-
-    // BUG: this misses some surfaces...
     (0..rays.len())
         .into_iter()
-        .map(|ri| {
+        .map(|ray_idx| {
             interactions
                 .iter()
-                .skip(ri)
+                .skip(ray_idx)
                 .step_by(rays.len())
-                .filter_map(|x| x.as_ref())
-                // .map(|x| x.unwrap())
                 .enumerate()
-                // .map(|(si, (p, dsq))| (si, (p, NotNan::new(dsq))))
-                .min_by_key(|&(_, (_, dsq))| {
-                    NotNan::new(*dsq).expect("Invalid distance to surface.")
+                .filter_map(|(surf_idx, opt_interaction)| {
+                    if let Some((point, dist_sq)) = opt_interaction {
+                        Some((*point, *dist_sq, surf_idx))
+                    } else {
+                        None
+                    }
                 })
-                .map(|(si, (p, dsq))| (*p, *dsq, si))
+                .min_by_key(|(_, dist_sq, _)| {
+                    NotNan::new(*dist_sq).expect("Invalid distance to surface.")
+                })
         })
         .collect()
-
-    // let mut closest_distance_squared: &f64;
-    // // TODO: multithread this
-    // for (ri, indexed_interaction) in positional_interactions.iter_mut().enumerate() {
-    //     closest_distance_squared = &f64::MAX;
-    //     for (si, interaction) in interactions.iter().enumerate() {
-    //         if let Some(x) = interaction[ri] {
-    //             if x.1 < *closest_distance_squared {
-    //                 *indexed_interaction = Some((x.0, x.1, si));
-    //                 closest_distance_squared = &indexed_interaction.as_ref().unwrap().1;
-    //             }
-    //         }
-    //     }
-    // }
-    // positional_interactions
 }
 
 /// Processes a ray's journey through the optical system and
@@ -144,7 +128,7 @@ fn many_rays_interactions(
 
 /// Trace all rays through the system until no more are left.
 pub fn trace_rays(mut rays: Vec<Ray>, surfaces: &[Surf]) -> (Vec<Ray>, Duration, Duration) {
-    let mut completed_rays: Vec<Ray> = Vec::new();
+    let mut completed_rays: Vec<Ray> = Vec::with_capacity(rays.len());
     let mut indexed_interactions: Vec<IndexedInteraction>;
 
     let mut t0: Instant;

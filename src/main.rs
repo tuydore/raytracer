@@ -84,7 +84,7 @@ fn extract_surfaces(
         .expect("Surfaces must be a list.")
         .to_owned();
 
-    let mut surface_list = Vec::new();
+    let mut surface_list = Vec::with_capacity(surfaces.len());
 
     for s in surfaces.iter() {
         let surface = match s
@@ -162,6 +162,7 @@ fn main() {
         surfaces.len()
     );
 
+    // raytrace_old(&camera, &surfaces, &filepath);
     render_scene(&camera, &surfaces, &filepath);
     println!("Result saved: {}", filepath);
 }
