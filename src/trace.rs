@@ -35,7 +35,7 @@ fn many_surfaces_many_rays(surfaces: &[Surf], rays: &[Ray]) -> Vec<IndexedIntera
         .collect();
 
     (0..rays.len())
-        .into_iter()
+        .into_par_iter()
         .map(|ray_idx| {
             interactions
                 .iter()
