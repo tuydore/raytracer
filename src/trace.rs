@@ -52,6 +52,24 @@ fn many_surfaces_many_rays(surfaces: &[Surf], rays: &[Ray]) -> Vec<IndexedIntera
         .collect()
 }
 
+/// Parallelize over rays first.
+fn many_rays_many_surfaces(surfaces: &[Surf], rays: &[Ray]) -> Vec<IndexedInteraction> {
+    rays.par_iter()
+        .map(|ray| {
+            surfaces
+                .iter()
+                .enumerate()
+                .filter_map(|(surf_idx, surf)| {
+                    surf.intersection(ray)
+                        .map(|point| (point, (point - ray.origin).norm_squared(), surf_idx))
+                })
+                .min_by_key(|(_, dist_sq, _)| {
+                    NotNan::new(*dist_sq).expect("Invalid distance to surface.")
+                })
+        })
+        .collect()
+}
+
 /// Processes a ray's journey through the optical system and
 /// returns whether that journey has been completed or not.
 fn one_ray_interaction(ray: &mut Ray, point: Point3<f64>, dsq: f64, surface: &Surf) -> bool {
@@ -140,7 +158,8 @@ pub fn trace_rays(mut rays: Vec<Ray>, surfaces: &[Surf]) -> (Vec<Ray>, Duration,
 
         // calculate all intersections with all surfaces
         t0 = Instant::now();
-        indexed_interactions = many_surfaces_many_rays(surfaces, &rays);
+        // indexed_interactions = many_surfaces_many_rays(surfaces, &rays);
+        indexed_interactions = many_rays_many_surfaces(surfaces, &rays);
         intersections += t0.elapsed();
 
         // update rays according to their interactions
@@ -152,29 +171,30 @@ pub fn trace_rays(mut rays: Vec<Ray>, surfaces: &[Surf]) -> (Vec<Ray>, Duration,
 }
 
 pub fn render_scene(camera: &Camera, scene: &[Surf], filepath: &str) {
-    let mut t0 = Instant::now();
+    let mut t0: Instant = Instant::now();
 
     let rays: Vec<Ray> = camera.create_rays();
-    let ray_generation_time_s = t0.elapsed().as_nanos() as f64 / 1e9;
+    let ray_generation_time_s: f64 = t0.elapsed().as_nanos() as f64 / 1e9;
     t0 = Instant::now();
 
-    let (traced_rays, intersections_time, interactions_time) = trace_rays(rays, scene);
-    let ray_trace_time_s = t0.elapsed().as_nanos() as f64 / 1e9;
-    let intersections_time = intersections_time.as_nanos() as f64 / 1e9;
-    let interactions_time = interactions_time.as_nanos() as f64 / 1e9;
+    let (traced_rays, intersections_time, interactions_time): (Vec<Ray>, Duration, Duration) =
+        trace_rays(rays, scene);
+    let ray_trace_time_s: f64 = t0.elapsed().as_nanos() as f64 / 1e9;
+    let intersections_time: f64 = intersections_time.as_nanos() as f64 / 1e9;
+    let interactions_time: f64 = interactions_time.as_nanos() as f64 / 1e9;
     t0 = Instant::now();
 
     let ray_data: Vec<[u8; 3]> = process_ray_data(traced_rays, camera.num_x * camera.num_y);
-    let ray_process_time_s = t0.elapsed().as_nanos() as f64 / 1e9;
+    let ray_process_time_s: f64 = t0.elapsed().as_nanos() as f64 / 1e9;
     t0 = Instant::now();
 
     save_jpg(filepath, ray_data, camera.num_x, camera.num_y);
-    let file_save_time_s = t0.elapsed().as_nanos() as f64 / 1e9;
+    let file_save_time_s: f64 = t0.elapsed().as_nanos() as f64 / 1e9;
 
     // show breakdown of time
-    let total_time =
+    let total_time: f64 =
         ray_generation_time_s + ray_trace_time_s + ray_process_time_s + file_save_time_s;
-    let mut table = Table::new();
+    let mut table: Table = Table::new();
     table.add_row(row![Fgb => "OPERATION", "TIME (s)", "TIME (%)"]);
     table.add_row(row!["Total", &format!("{:.2}", total_time), "100.0"]);
     table.add_row(row![

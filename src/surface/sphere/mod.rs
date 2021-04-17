@@ -38,11 +38,12 @@ impl SphereShape {
         &self,
         origin: &Point3<f64>,
         direction: &Vector3<f64>,
-    ) -> (f64, f64) {
-        let u = direction.normalize();
-        let alpha = -(u.dot(&(*origin - self.center)));
-        let delta = alpha.powi(2) - ((*origin - self.center).norm_squared() - self.radius.powi(2));
-        (alpha, delta)
+    ) -> (f64, f64, Vector3<f64>) {
+        let direction_normalized: Vector3<f64> = direction.normalize();
+        let distance: Vector3<f64> = *origin - self.center;
+        let alpha: f64 = -(direction_normalized.dot(&distance));
+        let delta: f64 = alpha.powi(2) - (distance.norm_squared() - self.radius.powi(2));
+        (alpha, delta, direction_normalized)
     }
 
     /// Intersection of ray line with sphere
@@ -51,21 +52,21 @@ impl SphereShape {
         origin: &Point3<f64>,
         direction: &Vector3<f64>,
     ) -> Vec<Point3<f64>> {
-        let (alpha, delta) = self.intersection_components(origin, direction);
+        let (alpha, delta, direction_normalized): (f64, f64, Vector3<f64>) =
+            self.intersection_components(origin, direction);
 
         // no intersection
         if delta < 0.0 {
             vec![]
         } else {
-            let dn = direction.normalize();
             // single intersection
             if delta.abs() <= f64::EPSILON {
-                vec![*origin + alpha * dn]
+                vec![*origin + alpha * direction_normalized]
             // two intersections
             } else {
                 vec![
-                    *origin + (alpha - delta.sqrt()) * dn,
-                    *origin + (alpha + delta.sqrt()) * dn,
+                    *origin + (alpha - delta.sqrt()) * direction_normalized,
+                    *origin + (alpha + delta.sqrt()) * direction_normalized,
                 ]
             }
         }
