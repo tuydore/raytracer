@@ -1,5 +1,7 @@
 use raytracer::trace::render_scene;
-
+use raytracer::{Surf, VolumeMap};
+use std::path::PathBuf;
+use structopt::StructOpt;
 use {
     rayon::ThreadPoolBuilder,
     raytracer::{
@@ -9,33 +11,14 @@ use {
             PlaneBuilder, RectangleBuilder, SphereBuilder, SurfaceBuilder,
             TexturedRectangleBuilder,
         },
-        Ray, Surface, VOP,
+        Ray, Surface,
     },
     serde_yaml::{from_str, from_value, Mapping, Value},
-    std::{collections::HashMap, env, fs, sync::Arc},
+    std::{fs, sync::Arc},
 };
 
-/// Load the given configuration file and return its contents as a parsed yaml hash.
-fn load_from_yaml() -> Mapping {
-    let args: Vec<String> = env::args().collect();
-
-    let contents =
-        fs::read_to_string(args[1].clone()).expect("Something went wrong reading the file");
-
-    from_str(&contents).expect("Error in parsing the file")
-}
-
-/// Extract the path to the image to be saved.
-fn extract_filepath(lhm: &Mapping) -> String {
-    lhm.get(&Value::String("filepath".to_owned()))
-        .expect("No filepath given.")
-        .as_str()
-        .expect("Filepath must be a string.")
-        .to_owned()
-}
-
 /// Extract VOPs.
-fn extract_vops(lhm: &Mapping) -> HashMap<String, Arc<VOP>> {
+fn extract_vops(lhm: &Mapping) -> VolumeMap {
     let volumes = lhm
         .get(&Value::String("volumes".to_owned()))
         .expect("No volumes given.")
@@ -56,7 +39,7 @@ fn extract_vops(lhm: &Mapping) -> HashMap<String, Arc<VOP>> {
 }
 
 /// Get the camera configuration.
-fn extract_camera(lhm: &Mapping, vop_map: &HashMap<String, Arc<VOP>>) -> Camera {
+fn extract_camera(lhm: &Mapping, vop_map: &VolumeMap) -> Camera {
     let camera_builder: CameraBuilder = from_value(
         lhm.get(&Value::String("camera".to_owned()))
             .expect("No camera given.")
@@ -66,17 +49,7 @@ fn extract_camera(lhm: &Mapping, vop_map: &HashMap<String, Arc<VOP>>) -> Camera 
     camera_builder.build(vop_map)
 }
 
-fn extract_threads(lhm: &Mapping) -> Option<usize> {
-    match lhm.get(&Value::String("threads".to_owned())) {
-        Some(v) => Some(v.as_u64().expect("Number of threads must be an integer.") as usize),
-        None => None,
-    }
-}
-
-fn extract_surfaces(
-    lhm: &Mapping,
-    vop_map: &HashMap<String, Arc<VOP>>,
-) -> Vec<Arc<dyn Surface + Send + Sync>> {
+fn extract_surfaces(lhm: &Mapping, vop_map: &VolumeMap) -> Vec<Surf> {
     let surfaces = lhm
         .get(&Value::String("surfaces".to_owned()))
         .expect("No surfaces give")
@@ -126,8 +99,82 @@ fn extract_surfaces(
 
     surface_list
 }
+#[derive(Debug, StructOpt)]
+#[structopt(name = "raytracer", about = "Powered by Lockdown Boredom™")]
+struct Opt {
+    /// Input YAML file with scene configuration.
+    #[structopt(parse(from_os_str), name = "INPUT")]
+    input: PathBuf,
 
-#[allow(dead_code)] // TODO: remove this once new method is fully implemented
+    /// Path to file containing output render. Must be of type jpg/jpeg/tif/tiff.
+    #[structopt(short, long, parse(from_os_str))]
+    output: PathBuf,
+
+    /// Number of threads to use.
+    #[structopt(short, long)]
+    threads: Option<usize>,
+
+    /// Use legacy ray tracing algorithm.
+    #[structopt(short, long)]
+    legacy: bool,
+}
+
+impl Opt {
+    // TODO: remove excessive Arcs?
+    /// Load the scene given in the YAML input file.
+    fn load_scene_from_yaml(&self) -> (VolumeMap, Camera, Vec<Surf>) {
+        let contents =
+            fs::read_to_string(self.input.clone()).expect("Something went wrong reading the file");
+        let document: Mapping = from_str(&contents).expect("Error in parsing the file");
+        let volumes = extract_vops(&document);
+        let camera = extract_camera(&document, &volumes);
+        let surfaces = extract_surfaces(&document, &volumes);
+        println!(
+            "Loaded: {} volume(s), {} surface(s).",
+            volumes.len(),
+            surfaces.len()
+        );
+        (volumes, camera, surfaces)
+    }
+
+    /// Start the global thread pool using given number of threads or the number of CPUs.
+    fn initialize_global_thread_pool(&self) {
+        if let Some(x) = self.threads {
+            ThreadPoolBuilder::new()
+                .num_threads(x)
+                .build_global()
+                .unwrap();
+            println!("Using {} thread(s).", x);
+        } else {
+            println!("Using {} thread(s)", num_cpus::get());
+        }
+    }
+
+    /// Check if the output file is valid. If it is, ensure all directory structure to it exists
+    /// and return the path as a String.
+    fn create_output_dir(&self) -> String {
+        match self.output.extension() {
+            Some(s) => match s.to_str().expect("Extension is not valid unicode.") {
+                "jpg" | "jpeg" | "tif" | "tiff" => {
+                    fs::create_dir_all(
+                        self.output
+                            .parent()
+                            .expect("No parent directory for save file."),
+                    )
+                    .expect("Could not create parent directory to output file.");
+                    self.output.to_str().unwrap().to_owned()
+                }
+                _ => panic!(
+                    "Invalid file extension {:?}, only jpg/jpeg/tif/tiff output is supported.",
+                    s
+                ),
+            },
+            None => panic!("Invalid file name for output: {:?}", self.output),
+        }
+    }
+}
+
+// TODO: remove this once new method is fully implemented
 fn raytrace_old(camera: &Camera, scene: &[Arc<dyn Surface + Send + Sync>], filepath: &str) {
     let rays: Vec<Ray> = camera.create_rays();
     save_jpg(
@@ -139,30 +186,15 @@ fn raytrace_old(camera: &Camera, scene: &[Arc<dyn Surface + Send + Sync>], filep
 }
 
 fn main() {
-    let document = load_from_yaml();
-
-    // if a number of threads has been given, set it
-    if let Some(x) = extract_threads(&document) {
-        ThreadPoolBuilder::new()
-            .num_threads(x)
-            .build_global()
-            .unwrap();
-        println!("Using {} thread(s).", x);
+    let opt = Opt::from_args();
+    opt.initialize_global_thread_pool();
+    let savefile = opt.create_output_dir();
+    let (_, camera, surfaces): (VolumeMap, Camera, Vec<Surf>) = opt.load_scene_from_yaml();
+    if opt.legacy {
+        println!("Using legacy ray tracing algorithm...");
+        raytrace_old(&camera, &surfaces, &savefile);
     } else {
-        println!("Using {} thread(s)", num_cpus::get());
+        render_scene(&camera, &surfaces, &savefile);
     }
-
-    let filepath = extract_filepath(&document);
-    let volumes = extract_vops(&document);
-    let camera = extract_camera(&document, &volumes);
-    let surfaces = extract_surfaces(&document, &volumes);
-    println!(
-        "Loaded: {} volume(s), {} surface(s).",
-        volumes.len(),
-        surfaces.len()
-    );
-
-    // raytrace_old(&camera, &surfaces, &filepath);
-    render_scene(&camera, &surfaces, &filepath);
-    println!("Result saved: {}", filepath);
+    println!("Result saved: {}", savefile);
 }

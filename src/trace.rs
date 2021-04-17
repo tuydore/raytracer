@@ -1,16 +1,12 @@
-use crate::{camera::save_jpg, Camera, Ray, Surface, SOP};
+use crate::{camera::save_jpg, Camera, IndexedInteraction, Interaction, Ray, Surf, SOP};
 use indicatif::ProgressBar;
 use nalgebra::Point3;
 use ordered_float::NotNan;
 use prettytable::{cell, row, Table};
 use rayon::iter::Either;
 use rayon::prelude::*;
+use std::time::Duration;
 use std::time::Instant;
-use std::{sync::Arc, time::Duration};
-
-type Surf = Arc<dyn Surface + Send + Sync>;
-type Interaction = Option<(Point3<f64>, f64)>;
-type IndexedInteraction = Option<(Point3<f64>, f64, usize)>;
 
 /// Return the point of intersection and distance squared to it (if any exist)
 /// between a surface and a vector of rays.
@@ -135,6 +131,7 @@ pub fn trace_rays(mut rays: Vec<Ray>, surfaces: &[Surf]) -> (Vec<Ray>, Duration,
     let mut intersections: Duration = Duration::new(0, 0);
     let mut interactions: Duration = Duration::new(0, 0);
 
+    // TODO: disable progress bar for tests
     let bar = ProgressBar::new(rays.len() as u64);
     while !rays.is_empty() {
         let total = rays.len() + completed_rays.len();
@@ -243,6 +240,7 @@ mod tests {
         Camera, VOP,
     };
     use std::collections::HashMap;
+    use std::sync::Arc;
 
     fn default_camera(vop_map: &HashMap<String, Arc<VOP>>) -> Camera {
         CameraBuilder {
